@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Проверка возвратных заказов</title>
+<style>
+body { font-family: Arial, sans-serif; padding: 15px; max-width: 700px; margin: auto; }
+label { display: block; margin-top: 10px; }
+.section { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; }
+.flex-row { display: flex; gap: 10px; }
+input[type="text"], textarea { width: 100%; }
+input[type="date"] { width: 50%; }
+textarea { min-height: 60px; }
+button { margin-top: 10px; }
+.success { color: green; margin-top: 16px; font-weight: bold; }
+.error { color: red; margin-top: 16px; font-weight: bold; }
+#csvOrdersTable { margin-top:12px; border-collapse: collapse; width:100%; }
+#csvOrdersTable tr { cursor:pointer; transition: background 0.2s; }
+#csvOrdersTable tr:hover { background: #eef; }
+#csvOrdersTable th, #csvOrdersTable td { border:1px solid #bbb; padding:6px 8px; }
+</style>
+</head>
+<body>
+<h2>Проверка возвратных заказов</h2>
+
+<div class="section">
+  <form id="manualForm" autocomplete="off">
+    <label>Номер заказ:<input type="text" id="orderNum" required></label>
+    <label>Номер клиентского возврат:<input type="text" id="clientReturnNum" required></label>
+    <label>Содержимое заказа:<textarea id="orderContent" required></textarea></label>
+    <label>Причина возврата от клиента:<textarea id="returnReason" required></textarea></label>
+    <label>Вскрыта товарная упаковка?</label>
+    <div class="flex-row">
+      <label><input type="radio" name="packingOpened" value="Да" required>Да</label>
+      <label><input type="radio" name="packingOpened" value="Нет" required>Нет</label>
+    </div>
+    <label>Повреждена товарная упаковка?</label>
+    <div class="flex-row">
+      <label><input type="radio" name="packingDamaged" value="Да" required>Да</label>
+      <label><input type="radio" name="packingDamaged" value="Нет" required>Нет</label>
+    </div>
+    <label>Повреждение товара?</label>
+    <div class="flex-row">
+      <label><input type="radio" name="goodDamaged" value="Да" required>Да</label>
+      <label><input type="radio" name="goodDamaged" value="Нет" required>Нет</label>
+    </div>
+    <label>Товар БУ?</label>
+    <div class="flex-row">
+      <label><input type="radio" name="goodUsed" value="Да" required>Да</label>
+      <label><input type="radio" name="goodUsed" value="Нет" required>Нет</label>
+    </div>
+    <label>Фактический размер:<input type="text" id="actualSize"></label>
+    <label>Комментарии по возврату:<textarea id="comment"></textarea></label>
+    <label>Дата проверки:<input type="date" id="dateChecked" required></label>
+    <label>Тикет/акт:<input type="text" id="ticket" required></label>
+    <label>Пересорт:</label>
+    <div class="flex-row">
+      <label><input type="radio" name="peresort" value="Да" required>Да</label>
+      <label><input type="radio" name="peresort" value="Нет" required>Нет</label>
+    </div>
+    <label>Отрпавляем в АСЦ?</label>
+    <div class="flex-row">
+      <label><input type="radio" name="toASC" value="Да" required>Да</label>
+      <label><input type="radio" name="toASC" value="Нет" required>Нет</label>
+    </div>
+    <label>Серийный номер:<input type="text" id="serialNum" required></label>
+    <label>Шк товара:<input type="text" id="barcode" required></label>
+    <label>Результат проверки:<input type="text" id="orderResult"></label>
+    <button type="submit">Проверить заказ и СОХРАНИТЬ</button>
+  </form>
+  <div id="msg"></div>
+</div>
+
+<div class="section">
+  <h4>Массовая загрузка (CSV/TSV)</h4>
+  <input type="file" id="csvInput" accept=".csv,.tsv,.txt">
+  <div id="csvOrders"></div>
+</div>
+
+<script>
+let loadedOrders = [];
+function norm(val) { return (val||'').replace(/\s/g, '').toLowerCase(); }
+function lookupOrder() {
+  const num = document.getElementById('orderNum').value;
+  const ret = document.getElementById('clientReturnNum').value;
+  if (!num && !ret) return null;
+  let order = null;
+  if (num) order = loadedOrders.find(o => norm(o.orderNum) === norm(num));
+  if (!order && ret) order = loadedOrders.find(o => norm(o.clientReturnNum) === norm(ret));
+  return order || null;
+}
+let autofillLock = false;
+function tryAutoFillForm() {
+  if (autofillLock) return;
+  const order = lookupOrder();
+  if (!order) return;
+  autofillLock = true;
+  if (norm(document.getElementById('orderNum').value) !== norm(order.orderNum)) {
+    document.getElementById('orderNum').value = order.orderNum || '';
+  }
+  if (norm(document.getElementById('clientReturnNum').value) !== norm(order.clientReturnNum)) {
+    document.getElementById('clientReturnNum').value = order.clientReturnNum || '';
+  }
+  document.getElementById('orderContent').value = order.orderContent || '';
+  document.getElementById('returnReason').value = order.returnReason || '';
+  autofillLock = false;
+}
+['input', 'change'].forEach(ev=>{
+  document.getElementById('orderNum').addEventListener(ev, tryAutoFillForm);
+  document.getElementById('clientReturnNum').addEventListener(ev, tryAutoFillForm);
+});
+function fillOrderFromCSV(order) {
+  document.getElementById('orderNum').value = order.orderNum || '';
+  document.getElementById('clientReturnNum').value = order.clientReturnNum || '';
+  document.getElementById('orderContent').value = order.orderContent || '';
+  document.getElementById('returnReason').value = order.returnReason || '';
+}
+function detectDelimiter(s) {
+  let line = s.split(/\r?\n/)[0];
+  if (line.indexOf('\t') !== -1) return '\t';
+  if (line.indexOf(';') !== -1) return ';';
+  return ',';
+}
+document.getElementById('csvInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    let text = evt.target.result;
+    text = text.split(/\r?\n/).filter(line => line.trim().length>0).join('\n');
+    let delimiter = detectDelimiter(text);
+    const lines = text.split(/\r?\n/).filter(l=>l.trim()!=='');
+    const headers = lines[0].split(delimiter).map(h=>h.trim().toLowerCase());
+    const idxOrderNum     = headers.findIndex(h=>h === 'номер заказ' || h === 'номер заказа');
+    const idxClientReturn = headers.findIndex(h=>h === 'номер клиентского возврат' || h === 'номер клиентского возврата' || h === 'номер клиетского возврата');
+    const idxOrderContent = headers.findIndex(h=>h.includes('содержимое заказа'));
+    const idxReturnReason = headers.findIndex(h=>h.includes('причина возврата'));
+    loadedOrders = [];
+    let html = '<table id="csvOrdersTable"><tr>' + lines[0].split(delimiter).map(h=>`<th>${h.trim()}</th>`).join('') + '</tr>';
+    for (let i=1; i<lines.length; i++) {
+      const row = lines[i].split(delimiter);
+      while (row.length < headers.length) row.push('');
+      html += `<tr data-idx="${i-1}">${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`;
+      loadedOrders.push({
+        orderNum: (row[idxOrderNum]||'').trim(),
+        clientReturnNum: (row[idxClientReturn]||'').trim(),
+        orderContent: (row[idxOrderContent]||'').trim(),
+        returnReason: (row[idxReturnReason]||'').trim()
+      });
+    }
+    html += '</table>';
+    document.getElementById('csvOrders').innerHTML = html;
+    document.querySelectorAll('#csvOrdersTable tr[data-idx]').forEach(function(tr){
+      tr.onclick = function() {
+        const idx = +this.getAttribute('data-idx');
+        fillOrderFromCSV(loadedOrders[idx]);
+      }
+    });
+  };
+  reader.readAsText(file, 'utf-8');
+});
+
+function getRadioValue(name) {
+  const el = document.querySelector("input[name='"+name+"']:checked");
+  return el ? el.value : "";
+}
+document.getElementById('manualForm').onsubmit = async function(e) {
+  e.preventDefault();
+  document.getElementById('msg').textContent = '';
+  const data = {
+    "Номер заказ": document.getElementById('orderNum').value,
+    "Номер клиентского возврат": document.getElementById('clientReturnNum').value,
+    "Содержимое заказа": document.getElementById('orderContent').value,
+    "Причина возврата от клиента": document.getElementById('returnReason').value,
+    "Вскрыта товарная упаковка?": getRadioValue('packingOpened'),
+    "Повреждена товарная упаковка?": getRadioValue('packingDamaged'),
+    "Повреждение товара?": getRadioValue('goodDamaged'),
+    "Товар БУ?": getRadioValue('goodUsed'),
+    "Фактический размер": document.getElementById('actualSize').value,
+    "Комментарии по возврату": document.getElementById('comment').value,
+    "Дата проверки": document.getElementById('dateChecked').value,
+    "Тикет/акт": document.getElementById('ticket').value,
+    "Пересорт": getRadioValue('peresort'),
+    "Отрпавляем в АСЦ?": getRadioValue('toASC'),
+    "Серийный номер": document.getElementById('serialNum').value,
+    "Шк товара": document.getElementById('barcode').value,
+    "Результат проверки": document.getElementById('orderResult').value
+  };
+  try {
+    const resp = await fetch(
+      "https://script.google.com/macros/s/AKfycbwPxMEpL94-hDpY0BtuzbMnPVukskOhPAXzitOGSTLP_6YJxXoRHMWjyKk4hHFxNkYYgA/exec",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {"Content-Type": "application/json"}
+      }
+    );
+    const txt = await resp.text();
+    if (resp.ok && txt.includes("OK")) {
+      document.getElementById('msg').innerHTML = '<div class="success">✅ Данные успешно сохранены в Google Таблице!</div>';
+      document.getElementById('manualForm').reset();
+    } else {
+      document.getElementById('msg').innerHTML = '<div class="error">❌ Ошибка отправки! Ответ сервера: ' + txt + '</div>';
+    }
+  } catch (err) {
+    document.getElementById('msg').innerHTML = '<div class="error">❌ Ошибка связи с Google Script</div>';
+  }
+}
+</script>
+</body>
+</html>
