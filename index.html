@@ -95,7 +95,7 @@ button { margin-top: 10px; }
       <label><input type="radio" name="peresort" value="Да" required>Да</label>
       <label><input type="radio" name="peresort" value="Нет" required>Нет</label>
     </div>
-    <label>Отрпавляем в АСЦ?</label>
+    <label>Отправляем в АСЦ?</label>
     <div class="flex-row">
       <label><input type="radio" name="toASC" value="Да" required>Да</label>
       <label><input type="radio" name="toASC" value="Нет" required>Нет</label>
@@ -312,7 +312,7 @@ async function submitAndSave() {
     "Дата проверки": document.getElementById('dateChecked').value,
     "Тикет/акт": document.getElementById('ticket').value,
     "Пересорт": getRadio("peresort"),
-    "Отрпавляем в АСЦ?": getRadio("toASC"),
+    "Отправляем в АСЦ?": getRadio("toASC"),
     "Серийный номер": document.getElementById('serialNum').value,
     "Шк товара": document.getElementById('barcode').value,
     "Результат проверки": document.getElementById('orderResult').value
