@@ -18,7 +18,7 @@ h2 {
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 4px 38px 0 rgba(163,175,212,0.07), 0 1.5px 6px 0 rgba(90,99,132,0.04);
-  padding: 24px 30px; margin: 0 auto 30px auto; max-width: 590px;
+  padding: 24px 30px; margin: 0 auto 30px auto; max-width: 610px;
 }
 label {
   font-size: 1.08em;
@@ -99,6 +99,7 @@ button:hover, .btn:hover { background:#015a9f; }
 
 <div class="section">
   <form id="manualForm" autocomplete="off">
+    <!-- Новый порядок -->
     <label>Номер заказа:<input type="text" id="orderNum" required></label>
     <label>Номер клиентского возврата:<input type="text" id="clientReturnNum" required></label>
     <label>Название СД:<input type="text" id="sdName" required></label>
@@ -137,12 +138,10 @@ button:hover, .btn:hover { background:#015a9f; }
       </div>
     </div>
     <div id="nrpBlock" style="display: none;">
-      <label>Есть акт нрп?
-        <span style="color:#e35d00;font-weight: bold">*</span>
-      </label>
+      <label>Есть акт нрп? <span style="color:#e35d00;font-weight: bold">*</span></label>
       <div class="flex-row">
-        <label><input type="radio" name="nrp" value="Да" required>Да</label>
-        <label><input type="radio" name="nrp" value="Нет" required>Нет</label>
+        <label><input type="radio" name="nrp" value="Да">Да</label>
+        <label><input type="radio" name="nrp" value="Нет">Нет</label>
       </div>
     </div>
 
@@ -185,16 +184,12 @@ function tryAutoFillForm() {
   const order = lookupOrder();
   if (!order) return;
   autofillLock = true;
-  if (norm(document.getElementById('orderNum').value) !== norm(order.orderNum)) {
-    document.getElementById('orderNum').value = order.orderNum || '';
-  }
-  if (norm(document.getElementById('clientReturnNum').value) !== norm(order.clientReturnNum)) {
-    document.getElementById('clientReturnNum').value = order.clientReturnNum || '';
-  }
-  document.getElementById('orderContent').value = order.orderContent || '';
-  document.getElementById('returnReason').value = order.returnReason || '';
+  document.getElementById('orderNum').value = order.orderNum || '';
+  document.getElementById('clientReturnNum').value = order.clientReturnNum || '';
   document.getElementById('sdName').value = order.sdName || '';
   document.getElementById('storeName').value = order.storeName || '';
+  document.getElementById('orderContent').value = order.orderContent || '';
+  document.getElementById('returnReason').value = order.returnReason || '';
   autofillLock = false;
 }
 ['input', 'change'].forEach(ev=>{
@@ -204,10 +199,10 @@ function tryAutoFillForm() {
 function fillOrderFromCSV(order) {
   document.getElementById('orderNum').value = order.orderNum || '';
   document.getElementById('clientReturnNum').value = order.clientReturnNum || '';
-  document.getElementById('orderContent').value = order.orderContent || '';
-  document.getElementById('returnReason').value = order.returnReason || '';
   document.getElementById('sdName').value = order.sdName || '';
   document.getElementById('storeName').value = order.storeName || '';
+  document.getElementById('orderContent').value = order.orderContent || '';
+  document.getElementById('returnReason').value = order.returnReason || '';
 }
 function detectDelimiter(s) {
   let line = s.split(/\r?\n/)[0];
@@ -225,12 +220,12 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
     let delimiter = detectDelimiter(text);
     const lines = text.split(/\r?\n/).filter(l=>l.trim()!=='');
     const headers = lines[0].split(delimiter).map(h=>h.trim().toLowerCase());
-    const idxOrderNum     = headers.findIndex(h=>h === 'номер заказ' || h === 'номер заказа');
-    const idxClientReturn = headers.findIndex(h=>h === 'номер клиентского возврат' || h === 'номер клиентского возврата' || h === 'номер клиетского возврата');
-    const idxOrderContent = headers.findIndex(h=>h.includes('содержимое заказа'));
-    const idxReturnReason = headers.findIndex(h=>h.includes('причина возврата'));
+    const idxOrderNum     = headers.findIndex(h=>h === 'номер заказа');
+    const idxClientReturn = headers.findIndex(h=>h === 'номер клиентского возврата' || h === 'номер клиентского возврат' || h === 'номер клиетского возврата');
     const idxSdName = headers.findIndex(h=>h.includes('название сд'));
     const idxStoreName = headers.findIndex(h=>h.includes('название магазина'));
+    const idxOrderContent = headers.findIndex(h=>h.includes('содержимое заказа'));
+    const idxReturnReason = headers.findIndex(h=>h.includes('причина возврата'));
     loadedOrders = [];
     let html = '<table id="csvOrdersTable"><tr>' + lines[0].split(delimiter).map(h=>`<th>${h.trim()}</th>`).join('') + '</tr>';
     for (let i=1; i<lines.length; i++) {
@@ -240,10 +235,10 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
       loadedOrders.push({
         orderNum: (row[idxOrderNum]||'').trim(),
         clientReturnNum: (row[idxClientReturn]||'').trim(),
-        orderContent: (row[idxOrderContent]||'').trim(),
-        returnReason: (row[idxReturnReason]||'').trim(),
         sdName: (row[idxSdName]||'').trim(),
-        storeName: (row[idxStoreName]||'').trim()
+        storeName: (row[idxStoreName]||'').trim(),
+        orderContent: (row[idxOrderContent]||'').trim(),
+        returnReason: (row[idxReturnReason]||'').trim()
       });
     }
     html += '</table>';
@@ -261,24 +256,31 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
 // динамика для тикета, акта нрп, серийного номера
 function updateDynamicFields() {
   let showTicket = getRadio('peresort') === 'да';
-  document.getElementById('ticketBlock').style.display = showTicket ? '' : 'none';
-  document.getElementById('ticket').required = showTicket;
+  if(document.getElementById('ticketBlock')){
+    document.getElementById('ticketBlock').style.display = showTicket ? '' : 'none';
+    let ticketEl = document.getElementById('ticket');
+    if (ticketEl) ticketEl.required = showTicket;
+  }
   let showSerial = getRadio('toASC') === 'да';
-  document.getElementById('serialBlock').style.display = showSerial ? '' : 'none';
-  document.getElementById('serialNum').required = showSerial;
+  if(document.getElementById('serialBlock')){
+    document.getElementById('serialBlock').style.display = showSerial ? '' : 'none';
+    let serialEl = document.getElementById('serialNum');
+    if (serialEl) serialEl.required = showSerial;
+  }
   let showNrp = getRadio('peresort') === 'да';
-  document.getElementById('nrpBlock').style.display = showNrp ? '' : 'none';
-  // Делаем "Есть акт нрп?" обязательным ТОЛЬКО при пересорте
-  if (showNrp) {
-    document.querySelectorAll('input[name="nrp"]').forEach(e=>e.required=true);
-  } else {
-    document.querySelectorAll('input[name="nrp"]').forEach(e=>e.required=false);
+  if(document.getElementById('nrpBlock')){
+    document.getElementById('nrpBlock').style.display = showNrp ? '' : 'none';
+    document.querySelectorAll('input[name="nrp"]').forEach(e => {
+      e.required = showNrp;
+      if (!showNrp) e.checked = false;
+    });
   }
 }
 ['change','input'].forEach(ev=>{
   document.getElementsByName('peresort').forEach(e=>e.addEventListener(ev, updateDynamicFields));
   document.getElementsByName('toASC').forEach(e=>e.addEventListener(ev, updateDynamicFields));
 });
+updateDynamicFields();
 
 // ======= МОДАЛКА ====================
 function showModal(msg, cb) {
@@ -307,17 +309,14 @@ document.getElementById('manualForm').onsubmit = function(e) {
   const goodUsed       = getRadio("goodUsed");
   const toASC          = getRadio("toASC");
   const peresort       = getRadio("peresort");
-  // 1. Комбинированные:
   if ((packingOpened==="да" && goodUsed==="да") || (packingDamaged==="да" && goodUsed==="да")) {
     showModal("Положи в ячейку БУ", submitAndSave);
     return false;
   }
-  // 2. Пересорт
   if (peresort === "да") {
     showModal("Положи в пересорт", submitAndSave);
     return false;
   }
-  // 3. Индивидуальные:
   if (toASC === "да") {
     showModal("Положи в АСЦ, после возвращения, определи его в БУ", submitAndSave);
     return false;
@@ -338,7 +337,6 @@ document.getElementById('manualForm').onsubmit = function(e) {
     showModal("Положи в уценку", submitAndSave);
     return false;
   }
-  // 4. Всё Нет
   if (
     packingOpened === "нет" &&
     packingDamaged === "нет" &&
