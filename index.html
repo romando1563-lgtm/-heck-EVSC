@@ -18,10 +18,46 @@ button { margin-top: 10px; }
 #csvOrdersTable tr { cursor:pointer; transition: background 0.2s; }
 #csvOrdersTable tr:hover { background: #eef; }
 #csvOrdersTable th, #csvOrdersTable td { border:1px solid #bbb; padding:6px 8px; }
+#modal {
+  display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;
+  background:rgba(0,0,0,0.32);justify-content:center;align-items:center;z-index:9999
+}
+#modal .modal-inner {
+  background: linear-gradient(150deg, #FFD600 70%, #FF9100 100%);
+  color: #291e03;
+  padding: 44px 54px 30px 54px;
+  border-radius: 16px;
+  box-shadow: 0 12px 38px 0 rgba(0,0,0,0.15);
+  font-size: 1.35em;
+  font-weight: bold;
+  text-align: center;
+  border: 3px solid #FFF59D;
+}
+#modal .modal-inner button {
+  background: #fffde7;
+  border: 2px solid #FF9100;
+  color: #FF6D00;
+  font-size:1.1em;padding: 8px 35px;
+  border-radius: 8px;
+  margin-top:22px;font-weight: bold;
+  cursor:pointer;
+  transition:background .15s;
+}
+#modal .modal-inner button:hover {
+  background:#ffecb3;
+}
 </style>
 </head>
 <body>
 <h2>Проверка возвратных заказов</h2>
+
+<!-- Модалка для подсказки -->
+<div id="modal">
+  <div class="modal-inner">
+    <span id="modalText"></span><br>
+    <button onclick="closeModal()">OK</button>
+  </div>
+</div>
 
 <div class="section">
   <form id="manualForm" autocomplete="off">
@@ -58,7 +94,7 @@ button { margin-top: 10px; }
       <label><input type="radio" name="peresort" value="Да" required>Да</label>
       <label><input type="radio" name="peresort" value="Нет" required>Нет</label>
     </div>
-    <label>Отрпавляем в АСЦ?</label>
+    <label>Отправляем в АСЦ?</label>
     <div class="flex-row">
       <label><input type="radio" name="toASC" value="Да" required>Да</label>
       <label><input type="radio" name="toASC" value="Нет" required>Нет</label>
@@ -160,28 +196,117 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
   reader.readAsText(file, 'utf-8');
 });
 
-function getRadioValue(name) {
-  const el = document.querySelector("input[name='"+name+"']:checked");
-  return el ? el.value : "";
+function showModal(msg, cb) {
+  document.getElementById('modalText').textContent = msg;
+  document.getElementById('modal').style.display = "flex";
+  closeModal.cb = cb;
 }
-document.getElementById('manualForm').onsubmit = async function(e) {
+function closeModal() {
+  document.getElementById('modal').style.display = "none";
+  if (closeModal.cb) { closeModal.cb(); closeModal.cb = null; }
+}
+function getRadio(name){
+  let e = document.querySelector('input[name="'+name+'"]:checked');
+  return e ? e.value.trim().toLowerCase() : "";
+}
+
+document.getElementById('manualForm').onsubmit = function(e) {
   e.preventDefault();
-  document.getElementById('msg').textContent = '';
+  const packingOpened  = getRadio("packingOpened");
+  const packingDamaged = getRadio("packingDamaged");
+  const goodDamaged    = getRadio("goodDamaged");
+  const goodUsed       = getRadio("goodUsed");
+  const toASC          = getRadio("toASC");
+  const peresort       = getRadio("peresort");
+
+  // 1. Комбинированные:
+  if ((packingOpened==="да" && goodUsed==="да") || (packingDamaged==="да" && goodUsed==="да")) {
+    showModal("Положи в ячейку БУ", submitAndSave);
+    return false;
+  }
+  // 2. Пересорт
+  if (peresort === "да") {
+    showModal("Положи в пересорт", submitAndSave);
+    return false;
+  }
+  // 3. Индивидуальные:
+  if (toASC === "да") {
+    showModal("Положи в АСЦ, после возвращения, определи его в БУ", submitAndSave);
+    return false;
+  }
+  if (goodUsed === "да") {
+    showModal("Положи в БУ", submitAndSave);
+    return false;
+  }
+  if (goodDamaged === "да") {
+    showModal("Положи в брак", submitAndSave);
+    return false;
+  }
+  if (packingOpened === "да") {
+    showModal("Положи в уценку", submitAndSave);
+    return false;
+  }
+  if (packingDamaged === "да") {
+    showModal("Положи в уценку", submitAndSave);
+    return false;
+  }
+  // 4. Всё Нет
+  if (
+    packingOpened === "нет" &&
+    packingDamaged === "нет" &&
+    goodDamaged === "нет" &&
+    goodUsed === "нет" &&
+    toASC === "нет" &&
+    peresort === "нет"
+  ) {
+    showModal("Положи в годный", submitAndSave);
+    return false;
+  }
+  submitAndSave();
+  return false;
+};
+
+function showToast(message, type = "info") {
+  const colors = {
+    success: "#4caf50",
+    error: "#f44336",
+    info: "#2196f3"
+  };
+  const toast = document.createElement("div");
+  toast.textContent = message;
+  toast.style.cssText = `
+      min-width:220px; max-width:350px; margin-bottom:10px;
+      padding: 16px 22px; color: #fff; background: ${colors[type]||'#333'};
+      border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      font-size: 1.12em; font-family: inherit; 
+      opacity:0; transition: opacity .3s;
+      position: fixed; top: 30px; right: 25px; z-index: 13000;
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.style.opacity = "1", 80);
+  setTimeout(() => {
+      toast.style.opacity = "0";
+      setTimeout(()=>toast.remove(), 400);
+  }, 3400);
+}
+
+// Async submit (оставь прокси!)
+async function submitAndSave() {
   const data = {
     "Номер заказ": document.getElementById('orderNum').value,
     "Номер клиентского возврат": document.getElementById('clientReturnNum').value,
     "Содержимое заказа": document.getElementById('orderContent').value,
     "Причина возврата от клиента": document.getElementById('returnReason').value,
-    "Вскрыта товарная упаковка?": getRadioValue('packingOpened'),
-    "Повреждена товарная упаковка?": getRadioValue('packingDamaged'),
-    "Повреждение товара?": getRadioValue('goodDamaged'),
-    "Товар БУ?": getRadioValue('goodUsed'),
+    "Вскрыта товарная упаковка?": getRadio('packingOpened'),
+    "Повреждена товарная упаковка?": getRadio('packingDamaged'),
+    "Повреждение товара?": getRadio('goodDamaged'),
+    "Товар БУ?": getRadio('goodUsed'),
     "Фактический размер": document.getElementById('actualSize').value,
     "Комментарии по возврату": document.getElementById('comment').value,
     "Дата проверки": document.getElementById('dateChecked').value,
     "Тикет/акт": document.getElementById('ticket').value,
-    "Пересорт": getRadioValue('peresort'),
-    "Отрпавляем в АСЦ?": getRadioValue('toASC'),
+    "Пересорт": getRadio("peresort"),
+    "Отправляем в АСЦ?": getRadio("toASC"),
     "Серийный номер": document.getElementById('serialNum').value,
     "Шк товара": document.getElementById('barcode').value,
     "Результат проверки": document.getElementById('orderResult').value
@@ -197,13 +322,13 @@ document.getElementById('manualForm').onsubmit = async function(e) {
     );
     const txt = await resp.text();
     if (resp.ok && txt.includes("OK")) {
-      document.getElementById('msg').innerHTML = '<div class="success">✅ Данные успешно сохранены в Google Таблице!</div>';
+      showToast("✅ Данные успешно сохранены в Google Таблице!","success");
       document.getElementById('manualForm').reset();
     } else {
-      document.getElementById('msg').innerHTML = '<div class="error">❌ Ошибка отправки! Ответ сервера: ' + txt + '</div>';
+      showToast("❌ Ошибка при сохранении: "+txt,"error");
     }
   } catch (err) {
-    document.getElementById('msg').innerHTML = '<div class="error">❌ Ошибка связи с прокси-сервером</div>';
+    showToast("❌ Ошибка связи с прокси-сервером","error");
   }
 }
 </script>
