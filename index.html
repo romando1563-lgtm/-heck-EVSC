@@ -12,8 +12,6 @@ input[type="text"], textarea { width: 100%; }
 input[type="date"] { width: 50%; }
 textarea { min-height: 60px; }
 button { margin-top: 10px; }
-.success { color: green; margin-top: 16px; font-weight: bold; }
-.error { color: red; margin-top: 16px; font-weight: bold; }
 #csvOrdersTable { margin-top:12px; border-collapse: collapse; width:100%; }
 #csvOrdersTable tr { cursor:pointer; transition: background 0.2s; }
 #csvOrdersTable tr:hover { background: #eef; }
@@ -51,7 +49,6 @@ button { margin-top: 10px; }
 <body>
 <h2>Проверка возвратных заказов</h2>
 
-<!-- Модалка для подсказки -->
 <div id="modal">
   <div class="modal-inner">
     <span id="modalText"></span><br>
@@ -62,10 +59,12 @@ button { margin-top: 10px; }
 
 <div class="section">
   <form id="manualForm" autocomplete="off">
+    <label>Название СД:<input type="text" id="sdName" required></label>
+    <label>Название магазина:<input type="text" id="storeName" required></label>
     <label>Номер заказ:<input type="text" id="orderNum" required></label>
     <label>Номер клиентского возврат:<input type="text" id="clientReturnNum" required></label>
     <label>Содержимое заказа:<textarea id="orderContent" required></textarea></label>
-    <label>Причина возврата от клиента:<textarea id="returnReason" required></textarea></label>
+    <label>Причина возврата от клиента:<textarea id="returnReason"></textarea></label>
     <label>Вскрыта товарная упаковка?</label>
     <div class="flex-row">
       <label><input type="radio" name="packingOpened" value="Да" required>Да</label>
@@ -89,7 +88,9 @@ button { margin-top: 10px; }
     <label>Фактический размер:<input type="text" id="actualSize"></label>
     <label>Комментарии по возврату:<textarea id="comment"></textarea></label>
     <label>Дата проверки:<input type="date" id="dateChecked" required></label>
-    <label>Тикет/акт:<input type="text" id="ticket" required></label>
+    <div id="ticketBlock" style="display:none">
+      <label>Тикет/акт:<input type="text" id="ticket"></label>
+    </div>
     <label>Пересорт:</label>
     <div class="flex-row">
       <label><input type="radio" name="peresort" value="Да" required>Да</label>
@@ -100,7 +101,9 @@ button { margin-top: 10px; }
       <label><input type="radio" name="toASC" value="Да" required>Да</label>
       <label><input type="radio" name="toASC" value="Нет" required>Нет</label>
     </div>
-    <label>Серийный номер:<input type="text" id="serialNum" required></label>
+    <div id="serialBlock" style="display:none">
+      <label>Серийный номер:<input type="text" id="serialNum"></label>
+    </div>
     <label>Шк товара:<input type="text" id="barcode" required></label>
     <label>Результат проверки:<input type="text" id="orderResult"></label>
     <button type="submit">Проверить заказ и СОХРАНИТЬ</button>
@@ -117,6 +120,7 @@ button { margin-top: 10px; }
 <script>
 let loadedOrders = [];
 function norm(val) { return (val||'').replace(/\s/g, '').toLowerCase(); }
+
 function lookupOrder() {
   const num = document.getElementById('orderNum').value;
   const ret = document.getElementById('clientReturnNum').value;
@@ -126,6 +130,7 @@ function lookupOrder() {
   if (!order && ret) order = loadedOrders.find(o => norm(o.clientReturnNum) === norm(ret));
   return order || null;
 }
+
 let autofillLock = false;
 function tryAutoFillForm() {
   if (autofillLock) return;
@@ -140,6 +145,8 @@ function tryAutoFillForm() {
   }
   document.getElementById('orderContent').value = order.orderContent || '';
   document.getElementById('returnReason').value = order.returnReason || '';
+  document.getElementById('sdName').value = order.sdName || '';
+  document.getElementById('storeName').value = order.storeName || '';
   autofillLock = false;
 }
 ['input', 'change'].forEach(ev=>{
@@ -151,13 +158,17 @@ function fillOrderFromCSV(order) {
   document.getElementById('clientReturnNum').value = order.clientReturnNum || '';
   document.getElementById('orderContent').value = order.orderContent || '';
   document.getElementById('returnReason').value = order.returnReason || '';
+  document.getElementById('sdName').value = order.sdName || '';
+  document.getElementById('storeName').value = order.storeName || '';
 }
+
 function detectDelimiter(s) {
   let line = s.split(/\r?\n/)[0];
   if (line.indexOf('\t') !== -1) return '\t';
   if (line.indexOf(';') !== -1) return ';';
   return ',';
 }
+
 document.getElementById('csvInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -172,6 +183,8 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
     const idxClientReturn = headers.findIndex(h=>h === 'номер клиентского возврат' || h === 'номер клиентского возврата' || h === 'номер клиетского возврата');
     const idxOrderContent = headers.findIndex(h=>h.includes('содержимое заказа'));
     const idxReturnReason = headers.findIndex(h=>h.includes('причина возврата'));
+    const idxSdName = headers.findIndex(h=>h.includes('название сд'));
+    const idxStoreName = headers.findIndex(h=>h.includes('название магазина'));
     loadedOrders = [];
     let html = '<table id="csvOrdersTable"><tr>' + lines[0].split(delimiter).map(h=>`<th>${h.trim()}</th>`).join('') + '</tr>';
     for (let i=1; i<lines.length; i++) {
@@ -182,7 +195,9 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
         orderNum: (row[idxOrderNum]||'').trim(),
         clientReturnNum: (row[idxClientReturn]||'').trim(),
         orderContent: (row[idxOrderContent]||'').trim(),
-        returnReason: (row[idxReturnReason]||'').trim()
+        returnReason: (row[idxReturnReason]||'').trim(),
+        sdName: (row[idxSdName]||'').trim(),
+        storeName: (row[idxStoreName]||'').trim()
       });
     }
     html += '</table>';
@@ -195,6 +210,22 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
     });
   };
   reader.readAsText(file, 'utf-8');
+});
+
+// TODO: динамика для тикета и серийного номера
+function updateDynamicFields() {
+  // Показывать тикет-акт только если "Пересорт" = "Да"
+  let showTicket = getRadio('peresort') === 'да';
+  document.getElementById('ticketBlock').style.display = showTicket ? '' : 'none';
+  document.getElementById('ticket').required = showTicket;
+  // Показывать серийный номер только если "Отправляем в АСЦ" = "Да"
+  let showSerial = getRadio('toASC') === 'да';
+  document.getElementById('serialBlock').style.display = showSerial ? '' : 'none';
+  document.getElementById('serialNum').required = showSerial;
+}
+['change','input'].forEach(ev=>{
+  document.getElementsByName('peresort').forEach(e=>e.addEventListener(ev, updateDynamicFields));
+  document.getElementsByName('toASC').forEach(e=>e.addEventListener(ev, updateDynamicFields));
 });
 
 //================= МОДАЛКА ==================
@@ -217,6 +248,7 @@ function getRadio(name){
 //============= ЛОГИКА ВСПЛЫВАЮЩИХ ПОДСКАЗОК =============
 document.getElementById('manualForm').onsubmit = function(e) {
   e.preventDefault();
+  updateDynamicFields();
   const packingOpened  = getRadio("packingOpened");
   const packingDamaged = getRadio("packingDamaged");
   const goodDamaged    = getRadio("goodDamaged");
@@ -271,7 +303,7 @@ document.getElementById('manualForm').onsubmit = function(e) {
   return false;
 };
 
-//================= "TOAST" ==================
+//================= TOAST ==================
 function showToast(message, type = "info") {
   const colors = {
     success: "#4caf50",
@@ -296,9 +328,11 @@ function showToast(message, type = "info") {
   }, 3400);
 }
 
-// Async submit (оставь прокси!)
+// ============= SUBMIT =================
 async function submitAndSave() {
   const data = {
+    "Название СД": document.getElementById('sdName').value,
+    "Название магазина": document.getElementById('storeName').value,
     "Номер заказ": document.getElementById('orderNum').value,
     "Номер клиентского возврат": document.getElementById('clientReturnNum').value,
     "Содержимое заказа": document.getElementById('orderContent').value,
@@ -330,6 +364,7 @@ async function submitAndSave() {
     if (resp.ok && txt.includes("OK")) {
       showToast("✅ Данные успешно сохранены в Google Таблице!","success");
       document.getElementById('manualForm').reset();
+      updateDynamicFields();
     } else {
       showToast("❌ Ошибка при сохранении: "+txt,"error");
     }
