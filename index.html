@@ -60,7 +60,7 @@ button:hover, .btn:hover { background:#015a9f; }
 #modal .modal-inner {
   background: linear-gradient(150deg, #ffe666 68%, #ffd028 103%);
   color: #361800;
-  padding: 42px 45px 30px 45px; min-width:330px; max-width:370px;
+  padding: 42px 45px 30px 45px; min-width:330px; max-width:400px;
   border-radius: 17px;
   box-shadow: 0 7px 34px 0 rgba(90,66,2,0.14);
   font-size: 1.21em;
@@ -164,18 +164,19 @@ button:hover, .btn:hover { background:#015a9f; }
 </div>
 
 <script>
-// --- auto/mass-upload unchanged, +sd/store (см. твой предыдущий код) ---
 let loadedOrders = [];
 function norm(val) { return (val||'').replace(/\s/g, '').toLowerCase(); }
+
 function lookupOrder() {
-  const num = document.getElementById('orderNum').value;
-  const ret = document.getElementById('clientReturnNum').value;
+  const num = document.getElementById('orderNum').value.trim();
+  const ret = document.getElementById('clientReturnNum').value.trim();
   if (!num && !ret) return null;
-  let order = null;
-  if (num) order = loadedOrders.find(o => norm(o.orderNum) === norm(num));
-  if (!order && ret) order = loadedOrders.find(o => norm(o.clientReturnNum) === norm(ret));
-  return order || null;
+  return loadedOrders.find(order =>
+    (num && norm(order.orderNum) === norm(num)) ||
+    (ret && norm(order.clientReturnNum) === norm(ret))
+  );
 }
+
 let autofillLock = false;
 function tryAutoFillForm() {
   if (autofillLock) return;
@@ -208,6 +209,7 @@ function detectDelimiter(s) {
   if (line.indexOf(';') !== -1) return ';';
   return ',';
 }
+
 document.getElementById('csvInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -251,9 +253,7 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
   reader.readAsText(file, 'utf-8');
 });
 
-// --- обновление динамических полей: ticket, serial num, nrp
 function updateDynamicFields() {
-  // ticket/акт
   let showTicket = getRadio('peresort') === 'да';
   if(document.getElementById('ticketBlock')){
     document.getElementById('ticketBlock').style.display = showTicket ? '' : 'none';
@@ -261,7 +261,6 @@ function updateDynamicFields() {
     if (ticketEl) ticketEl.required = showTicket;
     if (!showTicket && ticketEl) ticketEl.value = '';
   }
-  // сер.номер
   let showSerial = getRadio('toASC') === 'да';
   if(document.getElementById('serialBlock')){
     document.getElementById('serialBlock').style.display = showSerial ? '' : 'none';
@@ -269,7 +268,6 @@ function updateDynamicFields() {
     if (serialEl) serialEl.required = showSerial;
     if (!showSerial && serialEl) serialEl.value = '';
   }
-  // нрп радиокнопки
   let showNrp = getRadio('peresort') === 'да';
   if(document.getElementById('nrpBlock')){
     document.getElementById('nrpBlock').style.display = showNrp ? '' : 'none';
@@ -285,7 +283,6 @@ function updateDynamicFields() {
 });
 updateDynamicFields();
 
-// ================ МОДАЛКА ===============
 function showModal(msg, cb) {
   document.getElementById('modalText').textContent = msg;
   document.getElementById('modal').style.display = "flex";
@@ -353,7 +350,6 @@ document.getElementById('manualForm').onsubmit = function(e) {
   submitAndSave();
   return false;
 };
-// =========== TOAST ==================
 function showToast(message, type = "info") {
   const colors = {
     success: "#4caf50",
