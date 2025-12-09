@@ -11,9 +11,7 @@ body {
   color: #1a2340;
   padding: 0;
 }
-h2 {
-  text-align: center; margin-top: 22px;
-}
+h2 { text-align: center; margin-top: 22px; }
 .section {
   background: #fff;
   border-radius: 18px;
@@ -135,11 +133,11 @@ button:hover, .btn:hover { background:#015a9f; }
         <label><input type="radio" name="peresort" value="Нет" required>Нет</label>
       </div>
     </div>
-    <div id="nrpBlock" style="display:none;">
+    <div id="nrpBlock">
       <label>Есть акт нрп? <span style="color:#e35d00;font-weight: bold">*</span></label>
       <div class="flex-row">
-        <label><input type="radio" name="nrp" value="Да">Да</label>
-        <label><input type="radio" name="nrp" value="Нет">Нет</label>
+        <label><input type="radio" name="nrp" value="Да" required>Да</label>
+        <label><input type="radio" name="nrp" value="Нет" required>Нет</label>
       </div>
     </div>
     <label>Отправляем в АСЦ?</label>
@@ -166,7 +164,6 @@ button:hover, .btn:hover { background:#015a9f; }
 <script>
 let loadedOrders = [];
 function norm(val) { return (val||'').replace(/\s/g, '').toLowerCase(); }
-
 function lookupOrder() {
   const num = document.getElementById('orderNum').value.trim();
   const ret = document.getElementById('clientReturnNum').value.trim();
@@ -176,7 +173,6 @@ function lookupOrder() {
     (ret && norm(order.clientReturnNum) === norm(ret))
   );
 }
-
 let autofillLock = false;
 function tryAutoFillForm() {
   if (autofillLock) return;
@@ -209,7 +205,6 @@ function detectDelimiter(s) {
   if (line.indexOf(';') !== -1) return ';';
   return ',';
 }
-
 document.getElementById('csvInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -254,6 +249,7 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
 });
 
 function updateDynamicFields() {
+  // ticket/акт (оставил на всякий случай)
   let showTicket = getRadio('peresort') === 'да';
   if(document.getElementById('ticketBlock')){
     document.getElementById('ticketBlock').style.display = showTicket ? '' : 'none';
@@ -261,6 +257,7 @@ function updateDynamicFields() {
     if (ticketEl) ticketEl.required = showTicket;
     if (!showTicket && ticketEl) ticketEl.value = '';
   }
+  // сер.номер
   let showSerial = getRadio('toASC') === 'да';
   if(document.getElementById('serialBlock')){
     document.getElementById('serialBlock').style.display = showSerial ? '' : 'none';
@@ -268,14 +265,10 @@ function updateDynamicFields() {
     if (serialEl) serialEl.required = showSerial;
     if (!showSerial && serialEl) serialEl.value = '';
   }
-  let showNrp = getRadio('peresort') === 'да';
-  if(document.getElementById('nrpBlock')){
-    document.getElementById('nrpBlock').style.display = showNrp ? '' : 'none';
-    document.querySelectorAll('input[name="nrp"]').forEach(e => {
-      e.required = showNrp;
-      if (!showNrp) e.checked = false;
-    });
-  }
+  // нрп always visible, required always
+  document.querySelectorAll('input[name="nrp"]').forEach(e => {
+    e.required = true;
+  });
 }
 ['change','input'].forEach(ev=>{
   document.getElementsByName('peresort').forEach(e=>e.addEventListener(ev, updateDynamicFields));
@@ -302,6 +295,12 @@ function getRadio(name){
 document.getElementById('manualForm').onsubmit = function(e) {
   e.preventDefault();
   updateDynamicFields();
+  const actNrp = getRadio("nrp");
+  // 0. Акт нрп имеет абсолютный приоритет:
+  if (actNrp === "да") {
+    showModal("Заказ должен быть утилизирован", submitAndSave);
+    return false;
+  }
   const packingOpened  = getRadio("packingOpened");
   const packingDamaged = getRadio("packingDamaged");
   const goodDamaged    = getRadio("goodDamaged");
@@ -388,7 +387,6 @@ async function submitAndSave() {
     "Фактический размер": document.getElementById('actualSize').value,
     "Комментарии по возврату": document.getElementById('comment').value,
     "Дата проверки": document.getElementById('dateChecked').value,
-    "Тикет/акт": document.getElementById('ticket') ? document.getElementById('ticket').value : '',
     "Есть акт нрп?": getRadio('nrp'),
     "Пересорт": getRadio("peresort"),
     "Отправляем в АСЦ?": getRadio("toASC"),
