@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Проверка возвратных заказов</title>
-<meta name="viewport" content="width=600, initial-scale=1">
+<meta name="viewport" content="width=660, initial-scale=1">
 <style>
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
@@ -99,7 +99,6 @@ button:hover, .btn:hover { background:#015a9f; }
 
 <div class="section">
   <form id="manualForm" autocomplete="off">
-    <!-- Новый порядок -->
     <label>Номер заказа:<input type="text" id="orderNum" required></label>
     <label>Номер клиентского возврата:<input type="text" id="clientReturnNum" required></label>
     <label>Название СД:<input type="text" id="sdName" required></label>
@@ -129,7 +128,6 @@ button:hover, .btn:hover { background:#015a9f; }
     <label>Фактический размер:<input type="text" id="actualSize"></label>
     <label>Комментарии по возврату:<textarea id="comment"></textarea></label>
     <label>Дата проверки:<input type="date" id="dateChecked" required></label>
-
     <div id="peresortBlock">
       <label>Пересорт:</label>
       <div class="flex-row">
@@ -137,14 +135,13 @@ button:hover, .btn:hover { background:#015a9f; }
         <label><input type="radio" name="peresort" value="Нет" required>Нет</label>
       </div>
     </div>
-    <div id="nrpBlock" style="display: none;">
+    <div id="nrpBlock" style="display:none;">
       <label>Есть акт нрп? <span style="color:#e35d00;font-weight: bold">*</span></label>
       <div class="flex-row">
         <label><input type="radio" name="nrp" value="Да">Да</label>
         <label><input type="radio" name="nrp" value="Нет">Нет</label>
       </div>
     </div>
-
     <label>Отправляем в АСЦ?</label>
     <div class="flex-row">
       <label><input type="radio" name="toASC" value="Да" required>Да</label>
@@ -167,6 +164,7 @@ button:hover, .btn:hover { background:#015a9f; }
 </div>
 
 <script>
+// --- auto/mass-upload unchanged, +sd/store (см. твой предыдущий код) ---
 let loadedOrders = [];
 function norm(val) { return (val||'').replace(/\s/g, '').toLowerCase(); }
 function lookupOrder() {
@@ -221,7 +219,7 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
     const lines = text.split(/\r?\n/).filter(l=>l.trim()!=='');
     const headers = lines[0].split(delimiter).map(h=>h.trim().toLowerCase());
     const idxOrderNum     = headers.findIndex(h=>h === 'номер заказа');
-    const idxClientReturn = headers.findIndex(h=>h === 'номер клиентского возврата' || h === 'номер клиентского возврат' || h === 'номер клиетского возврата');
+    const idxClientReturn = headers.findIndex(h=>h.indexOf('номер клиентского возврат')===0 || h === 'номер клиентского возврата' || h === 'номер клиетского возврата');
     const idxSdName = headers.findIndex(h=>h.includes('название сд'));
     const idxStoreName = headers.findIndex(h=>h.includes('название магазина'));
     const idxOrderContent = headers.findIndex(h=>h.includes('содержимое заказа'));
@@ -253,20 +251,25 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
   reader.readAsText(file, 'utf-8');
 });
 
-// динамика для тикета, акта нрп, серийного номера
+// --- обновление динамических полей: ticket, serial num, nrp
 function updateDynamicFields() {
+  // ticket/акт
   let showTicket = getRadio('peresort') === 'да';
   if(document.getElementById('ticketBlock')){
     document.getElementById('ticketBlock').style.display = showTicket ? '' : 'none';
     let ticketEl = document.getElementById('ticket');
     if (ticketEl) ticketEl.required = showTicket;
+    if (!showTicket && ticketEl) ticketEl.value = '';
   }
+  // сер.номер
   let showSerial = getRadio('toASC') === 'да';
   if(document.getElementById('serialBlock')){
     document.getElementById('serialBlock').style.display = showSerial ? '' : 'none';
     let serialEl = document.getElementById('serialNum');
     if (serialEl) serialEl.required = showSerial;
+    if (!showSerial && serialEl) serialEl.value = '';
   }
+  // нрп радиокнопки
   let showNrp = getRadio('peresort') === 'да';
   if(document.getElementById('nrpBlock')){
     document.getElementById('nrpBlock').style.display = showNrp ? '' : 'none';
@@ -282,7 +285,7 @@ function updateDynamicFields() {
 });
 updateDynamicFields();
 
-// ======= МОДАЛКА ====================
+// ================ МОДАЛКА ===============
 function showModal(msg, cb) {
   document.getElementById('modalText').textContent = msg;
   document.getElementById('modal').style.display = "flex";
@@ -299,7 +302,6 @@ function getRadio(name){
   let e = document.querySelector('input[name="'+name+'"]:checked');
   return e ? e.value.trim().toLowerCase() : "";
 }
-// =========== ЛОГИКА ПОДСКАЗОК ===========
 document.getElementById('manualForm').onsubmit = function(e) {
   e.preventDefault();
   updateDynamicFields();
@@ -351,8 +353,7 @@ document.getElementById('manualForm').onsubmit = function(e) {
   submitAndSave();
   return false;
 };
-
-// ============= TOAST ==================
+// =========== TOAST ==================
 function showToast(message, type = "info") {
   const colors = {
     success: "#4caf50",
@@ -376,8 +377,6 @@ function showToast(message, type = "info") {
       setTimeout(()=>toast.remove(), 400);
   }, 3400);
 }
-
-// =========== SUBMIT ===================
 async function submitAndSave() {
   const data = {
     "Номер заказа": document.getElementById('orderNum').value,
