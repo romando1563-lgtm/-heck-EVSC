@@ -19,8 +19,8 @@ button { margin-top: 10px; }
 #csvOrdersTable tr:hover { background: #eef; }
 #csvOrdersTable th, #csvOrdersTable td { border:1px solid #bbb; padding:6px 8px; }
 #modal {
-  display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;
-  background:rgba(0,0,0,0.32);justify-content:center;align-items:center;z-index:9999
+  display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.32); justify-content: center; align-items: center; z-index: 9999;
 }
 #modal .modal-inner {
   background: linear-gradient(150deg, #FFD600 70%, #FF9100 100%);
@@ -39,7 +39,7 @@ button { margin-top: 10px; }
   color: #FF6D00;
   font-size:1.1em;padding: 8px 35px;
   border-radius: 8px;
-  margin-top:22px;font-weight: bold;
+  margin:12px 7px 0 7px;font-weight: bold;
   cursor:pointer;
   transition:background .15s;
 }
@@ -55,7 +55,8 @@ button { margin-top: 10px; }
 <div id="modal">
   <div class="modal-inner">
     <span id="modalText"></span><br>
-    <button onclick="closeModal()">OK</button>
+    <button id="modal-confirm-btn" onclick="closeModal(true)">Понятно</button>
+    <button id="modal-cancel-btn" onclick="closeModal(false)">Отмена</button>
   </div>
 </div>
 
@@ -94,7 +95,7 @@ button { margin-top: 10px; }
       <label><input type="radio" name="peresort" value="Да" required>Да</label>
       <label><input type="radio" name="peresort" value="Нет" required>Нет</label>
     </div>
-    <label>Отправляем в АСЦ?</label>
+    <label>Отрпавляем в АСЦ?</label>
     <div class="flex-row">
       <label><input type="radio" name="toASC" value="Да" required>Да</label>
       <label><input type="radio" name="toASC" value="Нет" required>Нет</label>
@@ -196,20 +197,24 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
   reader.readAsText(file, 'utf-8');
 });
 
+//================= МОДАЛКА ==================
 function showModal(msg, cb) {
   document.getElementById('modalText').textContent = msg;
   document.getElementById('modal').style.display = "flex";
   closeModal.cb = cb;
 }
-function closeModal() {
+function closeModal(confirm) {
   document.getElementById('modal').style.display = "none";
-  if (closeModal.cb) { closeModal.cb(); closeModal.cb = null; }
+  if (confirm && typeof closeModal.cb === "function") {
+    closeModal.cb();
+  }
+  closeModal.cb = null;
 }
 function getRadio(name){
   let e = document.querySelector('input[name="'+name+'"]:checked');
   return e ? e.value.trim().toLowerCase() : "";
 }
-
+//============= ЛОГИКА ВСПЛЫВАЮЩИХ ПОДСКАЗОК =============
 document.getElementById('manualForm').onsubmit = function(e) {
   e.preventDefault();
   const packingOpened  = getRadio("packingOpened");
@@ -266,6 +271,7 @@ document.getElementById('manualForm').onsubmit = function(e) {
   return false;
 };
 
+//================= "TOAST" ==================
 function showToast(message, type = "info") {
   const colors = {
     success: "#4caf50",
@@ -306,7 +312,7 @@ async function submitAndSave() {
     "Дата проверки": document.getElementById('dateChecked').value,
     "Тикет/акт": document.getElementById('ticket').value,
     "Пересорт": getRadio("peresort"),
-    "Отправляем в АСЦ?": getRadio("toASC"),
+    "Отрпавляем в АСЦ?": getRadio("toASC"),
     "Серийный номер": document.getElementById('serialNum').value,
     "Шк товара": document.getElementById('barcode').value,
     "Результат проверки": document.getElementById('orderResult').value
