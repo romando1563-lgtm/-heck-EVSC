@@ -98,7 +98,7 @@ button:hover, .btn:hover { background:#015a9f; }
 <div class="section">
   <form id="manualForm" autocomplete="off">
     <label>Номер заказа:<input type="text" id="orderNum" required></label>
-    <label>Номер клиентского возврат:<input type="text" id="clientReturnNum" required></label>
+    <label>Номер клиентского возврата:<input type="text" id="clientReturnNum" required></label>
     <label>Название СД:<input type="text" id="sdName" required></label>
     <label>Название магазина:<input type="text" id="storeName" required></label>
     <label>Содержимое заказа:<textarea id="orderContent" required></textarea></label>
@@ -167,7 +167,6 @@ button:hover, .btn:hover { background:#015a9f; }
 <script>
 let loadedOrders = [];
 function norm(val) { return (val||'').replace(/\s/g, '').toLowerCase(); }
-// lookup by either номер заказа or номер клиентского возврат
 function lookupOrder() {
   const num = document.getElementById('orderNum').value.trim();
   const ret = document.getElementById('clientReturnNum').value.trim();
@@ -220,7 +219,7 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
     const lines = text.split(/\r?\n/).filter(l=>l.trim()!=='');
     const headers = lines[0].split(delimiter).map(h=>h.trim().toLowerCase());
     const idxOrderNum     = headers.findIndex(h=>h === 'номер заказа');
-    const idxClientReturn = headers.findIndex(h=>h === 'номер клиентского возврат');
+    const idxClientReturn = headers.findIndex(h=>h === 'номер клиентского возврата');
     const idxSdName = headers.findIndex(h=>h.includes('название сд'));
     const idxStoreName = headers.findIndex(h=>h.includes('название магазина'));
     const idxOrderContent = headers.findIndex(h=>h.includes('содержимое заказа'));
@@ -260,7 +259,6 @@ function updateDynamicFields() {
     if (serialEl) serialEl.required = showSerial;
     if (!showSerial && serialEl) serialEl.value = '';
   }
-  // Поле акт нрп видимо всегда, но поддержка required JS
   document.querySelectorAll('input[name="nrp"]').forEach(e => {
     e.required = true;
   });
@@ -291,7 +289,6 @@ document.getElementById('manualForm').onsubmit = function(e) {
   e.preventDefault();
   updateDynamicFields();
   const actNrp = getRadio("nrp");
-  // 0. Акт нрп всегда приоритет:
   if (actNrp === "да") {
     showModal("Заказ должен быть утилизирован", submitAndSave);
     return false;
@@ -370,7 +367,7 @@ function showToast(message, type = "info") {
 async function submitAndSave() {
   const data = {
     "Номер заказа": document.getElementById('orderNum').value,
-    "Номер клиентского возврат": document.getElementById('clientReturnNum').value,
+    "Номер клиентского возврата": document.getElementById('clientReturnNum').value,
     "Название СД": document.getElementById('sdName').value,
     "Название магазина": document.getElementById('storeName').value,
     "Содержимое заказа": document.getElementById('orderContent').value,
