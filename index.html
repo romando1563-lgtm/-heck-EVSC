@@ -113,8 +113,8 @@ function lookupOrder(){
   const ret=document.getElementById('clientReturnNum').value.trim();
   if(!num&&!ret)return null;
   return loadedOrders.find(order=>
-    (num&&norm(order.orderNum)===norm(num))||
-    (ret&&norm(order.clientReturnNum)===norm(ret))
+    (num&&norm(order["Номер заказа"])===norm(num))||
+    (ret&&norm(order["Номер клиентского возврата"])===norm(ret))
   );
 }
 let autofillLock=false;
@@ -123,12 +123,12 @@ function tryAutoFillForm(){
   const order=lookupOrder();
   if(!order)return;
   autofillLock=true;
-  document.getElementById('orderNum').value=order.orderNum||'';
-  document.getElementById('clientReturnNum').value=order.clientReturnNum||'';
-  document.getElementById('sdName').value=order.sdName||'';
-  document.getElementById('storeName').value=order.storeName||'';
-  document.getElementById('orderContent').value=order.orderContent||'';
-  document.getElementById('returnReason').value=order.returnReason||'';
+  document.getElementById('orderNum').value=order["Номер заказа"]||'';
+  document.getElementById('clientReturnNum').value=order["Номер клиентского возврата"]||'';
+  document.getElementById('sdName').value=order["Название СД"]||'';
+  document.getElementById('storeName').value=order["Название магазина"]||'';
+  document.getElementById('orderContent').value=order["Содержимое заказа"]||'';
+  document.getElementById('returnReason').value=order["Причина возврата от клиента"]||'';
   autofillLock=false;
 }
 ['input','change'].forEach(ev=>{
@@ -136,12 +136,12 @@ function tryAutoFillForm(){
   document.getElementById('clientReturnNum').addEventListener(ev,tryAutoFillForm);
 });
 function fillOrderFromCSV(order){
-  document.getElementById('orderNum').value=order.orderNum||'';
-  document.getElementById('clientReturnNum').value=order.clientReturnNum||'';
-  document.getElementById('sdName').value=order.sdName||'';
-  document.getElementById('storeName').value=order.storeName||'';
-  document.getElementById('orderContent').value=order.orderContent||'';
-  document.getElementById('returnReason').value=order.returnReason||'';
+  document.getElementById('orderNum').value=order["Номер заказа"]||'';
+  document.getElementById('clientReturnNum').value=order["Номер клиентского возврата"]||'';
+  document.getElementById('sdName').value=order["Название СД"]||'';
+  document.getElementById('storeName').value=order["Название магазина"]||'';
+  document.getElementById('orderContent').value=order["Содержимое заказа"]||'';
+  document.getElementById('returnReason').value=order["Причина возврата от клиента"]||'';
 }
 function detectDelimiter(s){let line=s.split(/\r?\n/)[0];if(line.indexOf('\t')!==-1)return'\t';if(line.indexOf(';')!==-1)return';';return',';}
 document.getElementById('csvInput').addEventListener('change',function(e){
@@ -152,27 +152,19 @@ document.getElementById('csvInput').addEventListener('change',function(e){
     text=text.split(/\r?\n/).filter(line=>line.trim().length>0).join('\n');
     let delimiter=detectDelimiter(text);
     const lines=text.split(/\r?\n/).filter(l=>l.trim()!=='');
-    const headers=lines[0].split(delimiter).map(h=>h.trim().toLowerCase());
-    const idxOrderNum = headers.findIndex(h=>h==='номер заказа');
-    const idxClientReturn = headers.findIndex(h=>h==='номер клиентского возврата');
-    const idxSdName = headers.findIndex(h=>h.includes('название сд'));
-    const idxStoreName = headers.findIndex(h=>h.includes('название магазина'));
-    const idxOrderContent = headers.findIndex(h=>h.includes('содержимое заказа'));
-    const idxReturnReason = headers.findIndex(h=>h.includes('причина возврата'));
+    const headers=lines[0].split(delimiter).map(h=>h.trim());
     loadedOrders=[];
-    let html = '<table id="csvOrdersTable"><tr>' + lines[0].split(delimiter).map(h=>`<th>${h.trim()}</th>`).join('') + '</tr>';
+    let html = '<table id="csvOrdersTable"><tr>' + headers.map(h=>`<th>${h}</th>`).join('') + '</tr>';
     for(let i=1;i<lines.length;i++){
       const row=lines[i].split(delimiter);
       while(row.length<headers.length)row.push('');
       html+=`<tr data-idx="${i-1}">${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`;
-      loadedOrders.push({
-        orderNum: (row[idxOrderNum]||'').trim(),
-        clientReturnNum: (row[idxClientReturn]||'').trim(),
-        sdName: (row[idxSdName]||'').trim(),
-        storeName: (row[idxStoreName]||'').trim(),
-        orderContent: (row[idxOrderContent]||'').trim(),
-        returnReason: (row[idxReturnReason]||'').trim()
-      });
+      // Делаем объект сразу из названий столбцов (шапки!)
+      let order = {};
+      for(let j=0;j<headers.length;j++){
+        order[headers[j]] = row[j].trim();
+      }
+      loadedOrders.push(order);
     }
     html+='</table>';
     document.getElementById('csvOrders').innerHTML=html;
@@ -185,7 +177,6 @@ document.getElementById('csvInput').addEventListener('change',function(e){
   };
   reader.readAsText(file,'utf-8');
 });
-
 function updateDynamicFields(){
   let showSerial=getRadio('toASC')==='да';
   if(document.getElementById('serialBlock')){
@@ -201,7 +192,6 @@ function updateDynamicFields(){
   document.getElementsByName('toASC').forEach(e=>e.addEventListener(ev,updateDynamicFields));
 });
 updateDynamicFields();
-
 function showModal(msg,cb){
   document.getElementById('modalText').textContent=msg;
   document.getElementById('modal').style.display="flex";
@@ -240,7 +230,6 @@ document.getElementById('manualForm').onsubmit=function(e){
   submitAndSave();
   return false;
 };
-
 function showToast(message,type="info"){
   const colors={success:"#4caf50",error:"#f44336",info:"#2196f3"};
   const toast=document.createElement("div");
@@ -279,9 +268,7 @@ async function submitAndSave(){
     "Шк товара": document.getElementById('barcode').value,
     "Результат проверки": document.getElementById('orderResult').value
   };
-  // Для отладки, можно удалить/закомментировать потом:
   console.log("ОТВЕТ СЕРВЕРА:", data);
-
   try {
     const resp = await fetch(
       "https://heck-evsc.onrender.com/proxy",
