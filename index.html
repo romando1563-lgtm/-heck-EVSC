@@ -173,7 +173,7 @@ function getField(id){
 document.getElementById('mainForm').onsubmit = function(e) {
   e.preventDefault();
   
-  // Сбор данных из формы
+  // Сбор данных из формы - В ТОЧНОМ ПОРЯДКЕ КАК В APPS SCRIPT
   const formData = {
     "Номер заказа": getField('Номер заказа'),
     "Номер клиентского возврата": getField('Номер клиентского возврата'),
@@ -236,27 +236,69 @@ document.getElementById('mainForm').onsubmit = function(e) {
   }
   
   // Отладка: показываем что отправляется
-  console.log("Отправляемые данные:", JSON.stringify(formData, null, 2));
+  console.log("Отправляемые данные в JSON:", JSON.stringify(formData, null, 2));
   
-  // Отправка данных
+  // Проверка структуры данных перед отправкой
+  const expectedFields = [
+    "Номер заказа",
+    "Номер клиентского возврата",
+    "Название СД",
+    "Название магазина",
+    "Содержимое заказа",
+    "Причина возврата от клиента",
+    "Вскрыта товарная упаковка?",
+    "Повреждена товарная упаковка?",
+    "Повреждение товара?",
+    "Товар БУ?",
+    "Фактический размер",
+    "Комментарии по возврату",
+    "Дата проверки",
+    "Тикет/акт",
+    "Есть акт нрп?",
+    "Пересорт",
+    "Отправляем в АСЦ?",
+    "Серийный номер",
+    "Шк товара",
+    "Результат проверки"
+  ];
+  
+  let allFieldsPresent = true;
+  for (const field of expectedFields) {
+    if (formData[field] === undefined) {
+      console.error(`Поле "${field}" отсутствует в отправляемых данных!`);
+      allFieldsPresent = false;
+    }
+  }
+  
+  if (!allFieldsPresent) {
+    alert("Обнаружены ошибки в структуре данных. Проверьте консоль.");
+    return;
+  }
+  
+  // Отправка данных - через прокси
   fetch("https://heck-evsc.onrender.com/proxy", {
     method: "POST",
     body: JSON.stringify(formData),
-    headers: {"Content-Type": "application/json"}
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    }
   })
   .then(response => {
+    console.log("Статус ответа:", response.status);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return response.text();
   })
   .then(responseText => {
-    alert('Данные успешно отправлены!\nОтвет сервера: ' + responseText);
+    console.log("Ответ сервера:", responseText);
+    alert('✅ Данные успешно отправлены в Google Sheets!\nОтвет: ' + responseText);
     document.getElementById('mainForm').reset();
   })
   .catch(error => {
     console.error('Ошибка отправки:', error);
-    alert('Ошибка отправки данных!\n' + error.message);
+    alert('❌ Ошибка отправки данных!\n' + error.message);
   });
 };
 </script>
