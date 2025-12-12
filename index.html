@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=700, initial-scale=1">
 <style>
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6f8fa; color: #1a2340; }
-h2 { text-align: center; margin-top: 22px; }
 .section { background: #fff; border-radius: 18px; box-shadow: 0 4px 32px 0 #dae5fa22; padding: 24px 30px; margin: 0 auto 30px auto; max-width: 690px;}
 label { font-size: 1.09em; display: block; margin-top: 16px; }
 input[type="text"], textarea, input[type="date"] {
@@ -17,20 +16,18 @@ textarea { min-height: 44px;}
 button, .btn {margin-top:22px;font-size:1.1em; border:none;background:linear-gradient(90deg,#0076ec 60%,#22b8cf 100%); color:#fff; padding:12px 40px; border-radius: 9px; font-weight:600;}
 button:hover, .btn:hover { background:#015a9f; }
 #modal {display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(10,34,80,0.26);justify-content:center;align-items:center;z-index:9999}
-#modal .modal-inner { background: linear-gradient(150deg, #ffe666 68%, #ffd028 103%); color: #361800; padding: 42px 45px 30px 45px; min-width:330px; max-width:400px; border-radius: 17px; box-shadow: 0 7px 34px 0 rgba(90,66,2,0.14); font-size: 1.21em; font-weight: 600; text-align:center; border:2.5px solid #FFEE95;}
+#modal .modal-inner { background: linear-gradient(150deg, #ffe666 68%, #ffd028 103%); color: #361800; padding: 42px 45px 30px 45px; min-width:330px; max-width:400px; border-radius: 17px; box-shadow: 0 7px 34px 0 rgba(90,66,2,0.14); font-size: 1.21em;font-weight: 600;text-align:center; border:2.5px solid #FFEE95;}
 #modal .modal-inner button { background: #fffbe0; border: 2px solid #ffc400; color: #e79114; font-size:1.07em; padding: 8px 31px; border-radius:9px; margin:15px 5px 0 5px;}
 #modal .modal-inner button:hover {background:#ffe178;}
 </style>
 </head>
 <body>
 <h2>Проверка возвратных заказов</h2>
-<div id="modal">
-  <div class="modal-inner">
-    <span id="modalText"></span><br>
-    <button type="button" onclick="closeModal(true)">Понятно</button>
-    <button type="button" onclick="closeModal(false)">Отмена</button>
-  </div>
-</div>
+<div id="modal"><div class="modal-inner">
+  <span id="modalText"></span><br>
+  <button type="button" onclick="closeModal(true)">Понятно</button>
+  <button type="button" onclick="closeModal(false)">Отмена</button>
+</div></div>
 <div class="section">
   <form id="manualForm" autocomplete="off">
     <label>Номер заказа:<input type="text" id="orderNum" required></label>
@@ -88,13 +85,13 @@ button:hover, .btn:hover { background:#015a9f; }
     <label>Результат проверки:<input type="text" id="orderResult"></label>
     <button type="submit" class="btn">Проверить заказ и СОХРАНИТЬ</button>
   </form>
-  <div id="msg"></div>
 </div>
 <div class="section">
   <h4>Массовая загрузка (CSV/TSV)</h4>
   <input type="file" id="csvInput" accept=".csv,.tsv,.txt">
   <div id="csvOrders"></div>
 </div>
+
 <script>
 let loadedOrders = [];
 function norm(val){return (val||'').replace(/\s/g,'').toLowerCase();}
@@ -149,10 +146,9 @@ document.getElementById('csvInput').addEventListener('change',function(e){
       const row=lines[i].split(delimiter);
       while(row.length<headers.length)row.push('');
       html+=`<tr data-idx="${i-1}">${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`;
-      // Строим объект по шапке!
       let order = {};
       for(let j=0;j<headers.length;j++){
-        order[headers[j]] = row[j].trim();
+        order[headers[j]] = row[j].trim(); // ключи строго по шапке!
       }
       loadedOrders.push(order);
     }
@@ -167,6 +163,7 @@ document.getElementById('csvInput').addEventListener('change',function(e){
   };
   reader.readAsText(file,'utf-8');
 });
+
 function updateDynamicFields(){
   let showSerial=getRadio('toASC')==='да';
   if(document.getElementById('serialBlock')){
@@ -182,6 +179,7 @@ function updateDynamicFields(){
   document.getElementsByName('toASC').forEach(e=>e.addEventListener(ev,updateDynamicFields));
 });
 updateDynamicFields();
+
 function showModal(msg,cb){
   document.getElementById('modalText').textContent=msg;
   document.getElementById('modal').style.display="flex";
@@ -220,7 +218,6 @@ document.getElementById('manualForm').onsubmit=function(e){
   submitAndSave();
   return false;
 };
-
 function showToast(message,type="info"){
   const colors={success:"#4caf50",error:"#f44336",info:"#2196f3"};
   const toast=document.createElement("div");
