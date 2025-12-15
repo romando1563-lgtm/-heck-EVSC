@@ -40,62 +40,73 @@ button:hover, .btn:hover { background:#015a9f; }
 </div>
 <div class="section">
   <form id="manualForm" autocomplete="off">
-    <label>Номер заказа:<input type="text" id="orderNum" required></label>
-    <label>Номер клиентского возврата:<input type="text" id="clientReturnNum" required></label>
-    <label>Название СД:<input type="text" id="sdName" required></label>
-    <label>Название магазина:<input type="text" id="storeName" required></label>
-    <label>Содержимое заказа:<textarea id="orderContent" required></textarea></label>
-    <label>Причина возврата от клиента:<textarea id="returnReason"></textarea></label>
+    <label>Номер заказа:<input type="text" id="Номер заказа" required></label>
+    <label>Номер клиентского возврата:<input type="text" id="Номер клиентского возврата" required></label>
+    <label>Название СД:<input type="text" id="Название СД" required></label>
+    <label>Название магазина:<input type="text" id="Название магазина" required></label>
+    <label>Содержимое заказа:<textarea id="Содержимое заказа" required></textarea></label>
+    <label>Причина возврата от клиента:<textarea id="Причина возврата от клиента"></textarea></label>
+    
     <label>Вскрыта товарная упаковка?</label>
     <div class="flex-row">
-      <label><input type="radio" name="packingOpened" value="Да" required>Да</label>
-      <label><input type="radio" name="packingOpened" value="Нет" required>Нет</label>
+      <label><input type="radio" name="Вскрыта товарная упаковка?" value="Да" required>Да</label>
+      <label><input type="radio" name="Вскрыта товарная упаковка?" value="Нет" required>Нет</label>
     </div>
+    
     <label>Повреждена товарная упаковка?</label>
     <div class="flex-row">
-      <label><input type="radio" name="packingDamaged" value="Да" required>Да</label>
-      <label><input type="radio" name="packingDamaged" value="Нет" required>Нет</label>
+      <label><input type="radio" name="Повреждена товарная упаковка?" value="Да" required>Да</label>
+      <label><input type="radio" name="Повреждена товарная упаковка?" value="Нет" required>Нет</label>
     </div>
+    
     <label>Повреждение товара?</label>
     <div class="flex-row">
-      <label><input type="radio" name="goodDamaged" value="Да" required>Да</label>
-      <label><input type="radio" name="goodDamaged" value="Нет" required>Нет</label>
+      <label><input type="radio" name="Повреждение товара?" value="Да" required>Да</label>
+      <label><input type="radio" name="Повреждение товара?" value="Нет" required>Нет</label>
     </div>
+    
     <label>Товар БУ?</label>
     <div class="flex-row">
-      <label><input type="radio" name="goodUsed" value="Да" required>Да</label>
-      <label><input type="radio" name="goodUsed" value="Нет" required>Нет</label>
+      <label><input type="radio" name="Товар БУ?" value="Да" required>Да</label>
+      <label><input type="radio" name="Товар БУ?" value="Нет" required>Нет</label>
     </div>
-    <label>Фактически размер:<input type="text" id="actualSize"></label>
-    <label>Комментарии по возврату:<textarea id="comment"></textarea></label>
-    <label>Дата проверки:<input type="date" id="dateChecked" required></label>
-
+    
+    <label>Фактический размер:<input type="text" id="Фактический размер"></label>
+    <label>Комментарии по возврату:<textarea id="Комментарии по возврату"></textarea></label>
+    <label>Дата проверки:<input type="date" id="Дата проверки" required></label>
+    
+    <!-- ДОБАВЛЕНО: поле Тикет/акт -->
+    <label>Тикет/акт:<input type="text" id="Тикет/акт"></label>
+    
     <div id="peresortBlock">
       <label>Пересорт:</label>
       <div class="flex-row">
-        <label><input type="radio" name="peresort" value="Да" required>Да</label>
-        <label><input type="radio" name="peresort" value="Нет" required>Нет</label>
+        <label><input type="radio" name="Пересорт" value="Да" required>Да</label>
+        <label><input type="radio" name="Пересорт" value="Нет" required>Нет</label>
       </div>
     </div>
-
+    
     <div id="nrpBlock">
       <label>Есть акт нрп? <span style="color:#e35d00;font-weight: bold">*</span></label>
       <div class="flex-row">
-        <label><input type="radio" name="nrp" value="Да" required>Да</label>
-        <label><input type="radio" name="nrp" value="Нет" required>Нет</label>
+        <label><input type="radio" name="Есть акт нрп?" value="Да" required>Да</label>
+        <label><input type="radio" name="Есть акт нрп?" value="Нет" required>Нет</label>
       </div>
     </div>
-
+    
     <label>Отправляем в АСЦ?</label>
     <div class="flex-row">
-      <label><input type="radio" name="toASC" value="Да" required>Да</label>
-      <label><input type="radio" name="toASC" value="Нет" required>Нет</label>
+      <label><input type="radio" name="Отправляем в АСЦ?" value="Да" required>Да</label>
+      <label><input type="radio" name="Отправляем в АСЦ?" value="Нет" required>Нет</label>
     </div>
+    
     <div id="serialBlock" style="display:none">
-      <label>Серийный номер:<input type="text" id="serialNum"></label>
+      <label>Серийный номер:<input type="text" id="Серийный номер"></label>
     </div>
-    <label>Шк товара:<input type="text" id="barcode" required></label>
-    <label>Результат проверки:<input type="text" id="orderResult"></label>
+    
+    <label>Шк товара:<input type="text" id="Шк товара" required></label>
+    <label>Результат проверки:<input type="text" id="Результат проверки"></label>
+    
     <button type="submit" class="btn">Проверить заказ и СОХРАНИТЬ</button>
   </form>
   <div id="msg"></div>
@@ -107,43 +118,118 @@ button:hover, .btn:hover { background:#015a9f; }
 </div>
 <script>
 let loadedOrders = [];
+
 function norm(val){return (val||'').replace(/\s/g,'').toLowerCase();}
+
 function lookupOrder(){
-  const num=document.getElementById('orderNum').value.trim();
-  const ret=document.getElementById('clientReturnNum').value.trim();
+  const num=document.getElementById('Номер заказа').value.trim();
+  const ret=document.getElementById('Номер клиентского возврата').value.trim();
   if(!num&&!ret)return null;
   return loadedOrders.find(order=>
     (num&&norm(order["Номер заказа"])===norm(num))||
     (ret&&norm(order["Номер клиентского возврата"])===norm(ret))
   );
 }
+
 let autofillLock=false;
+
 function tryAutoFillForm(){
   if(autofillLock)return;
   const order=lookupOrder();
   if(!order)return;
   autofillLock=true;
-  document.getElementById('orderNum').value=order["Номер заказа"]||'';
-  document.getElementById('clientReturnNum').value=order["Номер клиентского возврата"]||'';
-  document.getElementById('sdName').value=order["Название СД"]||'';
-  document.getElementById('storeName').value=order["Название магазина"]||'';
-  document.getElementById('orderContent').value=order["Содержимое заказа"]||'';
-  document.getElementById('returnReason').value=order["Причина возврата от клиента"]||'';
+  
+  // Заполняем ВСЕ поля по их ID (которые теперь совпадают с ключами JSON)
+  document.getElementById('Номер заказа').value=order["Номер заказа"]||'';
+  document.getElementById('Номер клиентского возврата').value=order["Номер клиентского возврата"]||'';
+  document.getElementById('Название СД').value=order["Название СД"]||'';
+  document.getElementById('Название магазина').value=order["Название магазина"]||'';
+  document.getElementById('Содержимое заказа').value=order["Содержимое заказа"]||'';
+  document.getElementById('Причина возврата от клиента').value=order["Причина возврата от клиента"]||'';
+  document.getElementById('Фактический размер').value=order["Фактический размер"]||'';
+  document.getElementById('Комментарии по возврату').value=order["Комментарии по возврату"]||'';
+  document.getElementById('Дата проверки').value=order["Дата проверки"]||'';
+  document.getElementById('Тикет/акт').value=order["Тикет/акт"]||'';
+  document.getElementById('Серийный номер').value=order["Серийный номер"]||'';
+  document.getElementById('Шк товара').value=order["Шк товара"]||'';
+  document.getElementById('Результат проверки').value=order["Результат проверки"]||'';
+  
+  // Заполняем радиокнопки
+  const radioFields = [
+    "Вскрыта товарная упаковка?",
+    "Повреждена товарная упаковка?",
+    "Повреждение товара?",
+    "Товар БУ?",
+    "Есть акт нрп?",
+    "Пересорт",
+    "Отправляем в АСЦ?"
+  ];
+  
+  radioFields.forEach(field => {
+    const value = order[field];
+    if (value) {
+      const radios = document.querySelectorAll(`input[name="${field}"]`);
+      radios.forEach(radio => {
+        radio.checked = (radio.value === value);
+      });
+    }
+  });
+  
   autofillLock=false;
+  updateDynamicFields();
 }
+
 ['input','change'].forEach(ev=>{
-  document.getElementById('orderNum').addEventListener(ev,tryAutoFillForm);
-  document.getElementById('clientReturnNum').addEventListener(ev,tryAutoFillForm);
+  document.getElementById('Номер заказа').addEventListener(ev,tryAutoFillForm);
+  document.getElementById('Номер клиентского возврата').addEventListener(ev,tryAutoFillForm);
 });
+
 function fillOrderFromCSV(order){
-  document.getElementById('orderNum').value=order["Номер заказа"]||'';
-  document.getElementById('clientReturnNum').value=order["Номер клиентского возврата"]||'';
-  document.getElementById('sdName').value=order["Название СД"]||'';
-  document.getElementById('storeName').value=order["Название магазина"]||'';
-  document.getElementById('orderContent').value=order["Содержимое заказа"]||'';
-  document.getElementById('returnReason').value=order["Причина возврата от клиента"]||'';
+  // Аналогично tryAutoFillForm, но без блокировки
+  document.getElementById('Номер заказа').value=order["Номер заказа"]||'';
+  document.getElementById('Номер клиентского возврата').value=order["Номер клиентского возврата"]||'';
+  document.getElementById('Название СД').value=order["Название СД"]||'';
+  document.getElementById('Название магазина').value=order["Название магазина"]||'';
+  document.getElementById('Содержимое заказа').value=order["Содержимое заказа"]||'';
+  document.getElementById('Причина возврата от клиента').value=order["Причина возврата от клиента"]||'';
+  document.getElementById('Фактический размер').value=order["Фактический размер"]||'';
+  document.getElementById('Комментарии по возврату').value=order["Комментарии по возврату"]||'';
+  document.getElementById('Дата проверки').value=order["Дата проверки"]||'';
+  document.getElementById('Тикет/акт').value=order["Тикет/акт"]||'';
+  document.getElementById('Серийный номер').value=order["Серийный номер"]||'';
+  document.getElementById('Шк товара').value=order["Шк товара"]||'';
+  document.getElementById('Результат проверки').value=order["Результат проверки"]||'';
+  
+  const radioFields = [
+    "Вскрыта товарная упаковка?",
+    "Повреждена товарная упаковка?",
+    "Повреждение товара?",
+    "Товар БУ?",
+    "Есть акт нрп?",
+    "Пересорт",
+    "Отправляем в АСЦ?"
+  ];
+  
+  radioFields.forEach(field => {
+    const value = order[field];
+    if (value) {
+      const radios = document.querySelectorAll(`input[name="${field}"]`);
+      radios.forEach(radio => {
+        radio.checked = (radio.value === value);
+      });
+    }
+  });
+  
+  updateDynamicFields();
 }
-function detectDelimiter(s){let line=s.split(/\r?\n/)[0];if(line.indexOf('\t')!==-1)return'\t';if(line.indexOf(';')!==-1)return';';return',';}
+
+function detectDelimiter(s){
+  let line=s.split(/\r?\n/)[0];
+  if(line.indexOf('\t')!==-1)return'\t';
+  if(line.indexOf(';')!==-1)return';';
+  return',';
+}
+
 document.getElementById('csvInput').addEventListener('change',function(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
@@ -159,7 +245,6 @@ document.getElementById('csvInput').addEventListener('change',function(e){
       const row=lines[i].split(delimiter);
       while(row.length<headers.length)row.push('');
       html+=`<tr data-idx="${i-1}">${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`;
-      // Делаем объект сразу из названий столбцов (шапки!)
       let order = {};
       for(let j=0;j<headers.length;j++){
         order[headers[j]] = row[j].trim();
@@ -177,46 +262,56 @@ document.getElementById('csvInput').addEventListener('change',function(e){
   };
   reader.readAsText(file,'utf-8');
 });
+
 function updateDynamicFields(){
-  let showSerial=getRadio('toASC')==='да';
+  let showSerial=getRadio('Отправляем в АСЦ?')==='да';
   if(document.getElementById('serialBlock')){
     document.getElementById('serialBlock').style.display=showSerial?'':'none';
-    let serialEl=document.getElementById('serialNum');
+    let serialEl=document.getElementById('Серийный номер');
     if(serialEl)serialEl.required=showSerial;
     if(!showSerial&&serialEl)serialEl.value='';
   }
-  document.querySelectorAll('input[name="nrp"]').forEach(e=>{e.required=true;});
+  document.querySelectorAll('input[name="Есть акт нрп?"]').forEach(e=>{e.required=true;});
 }
+
 ['change','input'].forEach(ev=>{
-  document.getElementsByName('peresort').forEach(e=>e.addEventListener(ev,updateDynamicFields));
-  document.getElementsByName('toASC').forEach(e=>e.addEventListener(ev,updateDynamicFields));
+  document.getElementsByName('Пересорт').forEach(e=>e.addEventListener(ev,updateDynamicFields));
+  document.getElementsByName('Отправляем в АСЦ?').forEach(e=>e.addEventListener(ev,updateDynamicFields));
 });
+
 updateDynamicFields();
+
 function showModal(msg,cb){
   document.getElementById('modalText').textContent=msg;
   document.getElementById('modal').style.display="flex";
   closeModal.cb=cb;
 }
+
 function closeModal(confirm){
   document.getElementById('modal').style.display="none";
   if(confirm&&typeof closeModal.cb==="function"){closeModal.cb();}
   closeModal.cb=null;
 }
+
 function getRadio(name){
   let e=document.querySelector('input[name="'+name+'"]:checked');
   return e?e.value.trim().toLowerCase():"";
 }
+
 document.getElementById('manualForm').onsubmit=function(e){
   e.preventDefault();
   updateDynamicFields();
-  const actNrp=getRadio("nrp");
+  
+  const actNrp=getRadio("Есть акт нрп?");
   if(actNrp==="да"){showModal("Заказ должен быть утилизирован",submitAndSave);return false;}
-  const packingOpened=getRadio("packingOpened");
-  const packingDamaged=getRadio("packingDamaged");
-  const goodDamaged=getRadio("goodDamaged");
-  const goodUsed=getRadio("goodUsed");
-  const toASC=getRadio("toASC");
-  const peresort=getRadio("peresort");
+  
+  const packingOpened=getRadio("Вскрыта товарная упаковка?");
+  const packingDamaged=getRadio("Повреждена товарная упаковка?");
+  const goodDamaged=getRadio("Повреждение товара?");
+  const goodUsed=getRadio("Товар БУ?");
+  const toASC=getRadio("Отправляем в АСЦ?");
+  const peresort=getRadio("Пересорт");
+  
   if((packingOpened==="да"&&goodUsed==="да")||(packingDamaged==="да"&&goodUsed==="да")){
     showModal("Положи в ячейку БУ",submitAndSave);return false;}
   if(peresort==="да"){showModal("Положи в пересорт",submitAndSave);return false;}
@@ -225,11 +320,14 @@ document.getElementById('manualForm').onsubmit=function(e){
   if(goodDamaged==="да"){showModal("Положи в брак",submitAndSave);return false;}
   if(packingOpened==="да"){showModal("Положи в уценку",submitAndSave);return false;}
   if(packingDamaged==="да"){showModal("Положи в уценку",submitAndSave);return false;}
+  
   if(packingOpened==="нет"&&packingDamaged==="нет"&&goodDamaged==="нет"&&goodUsed==="нет"&&toASC==="нет"&&peresort==="нет"){
     showModal("Положи в годный",submitAndSave);return false;}
+  
   submitAndSave();
   return false;
 };
+
 function showToast(message,type="info"){
   const colors={success:"#4caf50",error:"#f44336",info:"#2196f3"};
   const toast=document.createElement("div");
@@ -246,29 +344,34 @@ function showToast(message,type="info"){
   setTimeout(()=>toast.style.opacity="1",80);
   setTimeout(()=>{toast.style.opacity="0";setTimeout(()=>toast.remove(),400);},3400);
 }
+
 async function submitAndSave(){
+  // ВАЖНО: Теперь ключи объекта совпадают с ID полей в HTML и ожиданиями Apps Script
   const data = {
-    "Номер заказа": document.getElementById('orderNum').value,
-    "Номер клиентского возврата": document.getElementById('clientReturnNum').value,
-    "Название СД": document.getElementById('sdName').value,
-    "Название магазина": document.getElementById('storeName').value,
-    "Содержимое заказа": document.getElementById('orderContent').value,
-    "Причина возврата от клиента": document.getElementById('returnReason').value,
-    "Вскрыта товарная упаковка?": getRadio('packingOpened'),
-    "Повреждена товарная упаковка?": getRadio('packingDamaged'),
-    "Повреждение товара?": getRadio('goodDamaged'),
-    "Товар БУ?": getRadio('goodUsed'),
-    "Фактический размер": document.getElementById('actualSize').value,
-    "Комментарии по возврату": document.getElementById('comment').value,
-    "Дата проверки": document.getElementById('dateChecked').value,
-    "Есть акт нрп?": getRadio('nrp'),
-    "Пересорт": getRadio("peresort"),
-    "Отправляем в АСЦ?": getRadio("toASC"),
-    "Серийный номер": document.getElementById('serialNum') ? document.getElementById('serialNum').value : '',
-    "Шк товара": document.getElementById('barcode').value,
-    "Результат проверки": document.getElementById('orderResult').value
+    "Номер заказа": document.getElementById('Номер заказа').value,
+    "Номер клиентского возврата": document.getElementById('Номер клиентского возврата').value,
+    "Название СД": document.getElementById('Название СД').value,
+    "Название магазина": document.getElementById('Название магазина').value,
+    "Содержимое заказа": document.getElementById('Содержимое заказа').value,
+    "Причина возврата от клиента": document.getElementById('Причина возврата от клиента').value,
+    "Вскрыта товарная упаковка?": getRadio('Вскрыта товарная упаковка?'),
+    "Повреждена товарная упаковка?": getRadio('Повреждена товарная упаковка?'),
+    "Повреждение товара?": getRadio('Повреждение товара?'),
+    "Товар БУ?": getRadio('Товар БУ?'),
+    "Фактический размер": document.getElementById('Фактический размер').value,
+    "Комментарии по возврату": document.getElementById('Комментарии по возврату').value,
+    "Дата проверки": document.getElementById('Дата проверки').value,
+    "Тикет/акт": document.getElementById('Тикет/акт').value, // ← Добавлено поле
+    "Есть акт нрп?": getRadio('Есть акт нрп?'),
+    "Пересорт": getRadio("Пересорт"),
+    "Отправляем в АСЦ?": getRadio("Отправляем в АСЦ?"),
+    "Серийный номер": document.getElementById('Серийный номер').value,
+    "Шк товара": document.getElementById('Шк товара').value,
+    "Результат проверки": document.getElementById('Результат проверки').value
   };
-  console.log("ОТВЕТ СЕРВЕРА:", data);
+  
+  console.log("ОТПРАВЛЯЕМЫЕ ДАННЫЕ:", data);
+  
   try {
     const resp = await fetch(
       "https://heck-evsc.onrender.com/proxy",
@@ -279,15 +382,17 @@ async function submitAndSave(){
       }
     );
     const txt = await resp.text();
-    console.log("ОТВЕТ СЕРВЕРА (ответ):", txt);
-    if(resp.ok && txt.includes("OK")){
-      showToast("✅ Данные успешно сохранены в Google Таблице!","success");
+    console.log("ОТВЕТ СЕРВЕРА:", txt);
+    
+    if(resp.ok && (txt.includes("OK") || txt.includes("success"))){
+      showToast("✅ Данные успешно сохранены в Google Таблицу!","success");
       document.getElementById('manualForm').reset();
       updateDynamicFields();
     }else{
       showToast("❌ Ошибка при сохранении: "+txt,"error");
     }
   }catch(err){
+    console.error("Ошибка связи:", err);
     showToast("❌ Ошибка связи с прокси-сервером","error");
   }
 }
