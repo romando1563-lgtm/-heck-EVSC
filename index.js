@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPxMEpL94-hDpY0BtuzbMnPVukskOhPAXzitOGSTLP_6YJxXoRHMWjyKk4hHFxNkYYgA/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzn5RDngPiEp5sARC6wBgnM334ss-jzfMGk-ZfvhQblRT--sd4_1-i3WBAeBoZv83SX8Q/exec";
 
 app.post("/proxy", async (req, res) => {
   console.log("\n" + "=".repeat(50));
