@@ -8,47 +8,56 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Ваш Google Apps Script URL - проверьте что он правильный!
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPxMEpL94-hDpY0BtuzbMnPVukskOhPAXzitOGSTLP_6YJxXoRHMWjyKk4hHFxNkYYgA/exec";
 
 app.post("/proxy", async (req, res) => {
-  console.log("📨 Получен запрос через прокси");
-  console.log("Тело запроса:", JSON.stringify(req.body, null, 2));
-
+  console.log("\n" + "=".repeat(50));
+  console.log("📨 ПОЛУЧЕН ЗАПРОС НА ПРОКСИ");
+  console.log("Время:", new Date().toISOString());
+  
   try {
-    // ДОБАВЬТЕ ПАРАМЕТР ?test=1 чтобы избежать редиректа
-    const urlWithParams = GOOGLE_SCRIPT_URL + "?random=" + Date.now();
+    const data = req.body;
+    console.log("Данные от клиента:", JSON.stringify(data, null, 2));
+    console.log("Количество полей:", Object.keys(data).length);
     
-    const response = await fetch(urlWithParams, {
+    // ВАЖНО: Google Apps Script ожидает данные в формате application/json
+    // Создаем строку JSON вручную
+    const postData = JSON.stringify(data);
+    console.log("Данные для отправки (первые 500 символов):", postData.substring(0, 500));
+    
+    // Отправляем в Google Apps Script
+    console.log(`📤 Отправляю в Google: ${GOOGLE_SCRIPT_URL}`);
+    
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
-      body: JSON.stringify(req.body),
+      body: postData,
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Content-Type': 'application/json'
       }
     });
-
+    
     const responseText = await response.text();
-    console.log("📤 Статус ответа:", response.status);
-    console.log("Ответ:", responseText.substring(0, 500));
-
+    console.log(`📥 Ответ от Google:`);
+    console.log(`Статус: ${response.status}`);
+    console.log(`Текст: ${responseText.substring(0, 500)}...`);
+    
     // Возвращаем ответ как есть
     res.status(response.status).send(responseText);
-
+    
   } catch (error) {
-    console.error("❌ Ошибка:", error);
+    console.error("❌ ОШИБКА ПРОКСИ:", error);
     res.status(500).json({
-      error: true,
-      message: error.message
+      status: "error",
+      message: "Ошибка прокси: " + error.message
     });
   }
 });
 
 app.get("/", (req, res) => {
-  res.json({ 
-    status: "Прокси работает", 
-    google_script: GOOGLE_SCRIPT_URL,
-    test: "Отправьте POST запрос на /proxy"
+  res.json({
+    service: "Google Apps Script Proxy",
+    status: "online",
+    timestamp: new Date().toISOString()
   });
 });
 
