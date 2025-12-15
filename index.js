@@ -1,95 +1,58 @@
 import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
+
 const app = express();
 
-// Более гибкие настройки CORS
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Разрешаем все CORS
+app.use(cors());
 app.use(express.json());
 
-const GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwPxMEpL94-hDpY0BtuzbMnPVukskOhPAXzitOGSTLP_6YJxXoRHMWjyKk4hHFxNkYYgA/exec";
+// Ваш Google Apps Script URL - проверьте что он правильный!
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPxMEpL94-hDpY0BtuzbMnPVukskOhPAXzitOGSTLP_6YJxXoRHMWjyKk4hHFxNkYYgA/exec";
 
 app.post("/proxy", async (req, res) => {
+  console.log("📨 Получен запрос через прокси");
+  console.log("Тело запроса:", JSON.stringify(req.body, null, 2));
+
   try {
-    console.log("📨 Получен запрос через прокси");
-    console.log("Данные:", JSON.stringify(req.body, null, 2));
+    // ДОБАВЬТЕ ПАРАМЕТР ?test=1 чтобы избежать редиректа
+    const urlWithParams = GOOGLE_SCRIPT_URL + "?random=" + Date.now();
     
-    // ВАЖНО: Google Apps Script возвращает редирект, нужно его обработать
-    const response = await fetch(GOOGLE_SCRIPT, {
+    const response = await fetch(urlWithParams, {
       method: "POST",
       body: JSON.stringify(req.body),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
-      },
-      // Важно: Google Apps Script возвращает 302 редирект
-      redirect: 'manual' // Обрабатываем редирект вручную
+      }
     });
 
-    console.log("Статус ответа от Google:", response.status);
-    console.log("Заголовки:", response.headers.raw());
+    const responseText = await response.text();
+    console.log("📤 Статус ответа:", response.status);
+    console.log("Ответ:", responseText.substring(0, 500));
 
-    // Если получили редирект (Google Apps Script делает 302)
-    if (response.status === 302 || response.status === 301) {
-      const redirectUrl = response.headers.get('location');
-      console.log("Редирект на:", redirectUrl);
-      
-      if (redirectUrl) {
-        // Следуем за редиректом
-        const redirectedResponse = await fetch(redirectUrl, {
-          method: "POST",
-          body: JSON.stringify(req.body),
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        });
-        
-        const text = await redirectedResponse.text();
-        console.log("Ответ после редиректа:", text);
-        res.status(redirectedResponse.status).send(text);
-        return;
-      }
-    }
+    // Возвращаем ответ как есть
+    res.status(response.status).send(responseText);
 
-    // Если не было редиректа, возвращаем как есть
-    const text = await response.text();
-    console.log("Ответ от Google:", text);
-    res.status(response.status).send(text);
-    
-  } catch (e) {
-    console.error("❌ Ошибка прокси:", e);
-    res.status(500).json({ 
-      status: "error", 
-      message: "Proxy error: " + e.message 
+  } catch (error) {
+    console.error("❌ Ошибка:", error);
+    res.status(500).json({
+      error: true,
+      message: error.message
     });
   }
 });
 
-// Простой GET для проверки
 app.get("/", (req, res) => {
   res.json({ 
-    status: "running", 
-    message: "Прокси сервер для Google Apps Script",
-    google_script: GOOGLE_SCRIPT
+    status: "Прокси работает", 
+    google_script: GOOGLE_SCRIPT_URL,
+    test: "Отправьте POST запрос на /proxy"
   });
 });
 
-// Проверка здоровья
-app.get("/health", (req, res) => {
-  res.json({ 
-    status: "ok", 
-    timestamp: new Date().toISOString() 
-  });
-});
-
-const port = process.env.PORT || 8080;
-app.listen(port, () => {
-  console.log(`🚀 Прокси сервер запущен на порту ${port}`);
-  console.log(`🔗 Google Apps Script: ${GOOGLE_SCRIPT}`);
-  console.log(`🌐 Доступен по: https://heck-evsc.onrender.com`);
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`🚀 Сервер запущен на порту ${PORT}`);
 });
