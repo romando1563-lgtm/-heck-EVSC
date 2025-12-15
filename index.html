@@ -1,402 +1,513 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Проверка возвратных заказов</title>
-<meta name="viewport" content="width=660, initial-scale=1">
-<style>
-body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6f8fa; color: #1a2340;}
-h2 { text-align: center; margin-top: 22px; }
-.section { background: #fff; border-radius: 18px; box-shadow: 0 4px 38px 0 #dae5fa22; padding: 24px 30px; margin: 0 auto 30px auto; max-width: 610px;}
-label { font-size: 1.08em; display: block; margin-top: 16px; }
-input[type="text"], textarea, input[type="date"] {
-  font-size: 1em; border-radius: 6px; border: 1.5px solid #cdd6e6;
-  margin-top: 5px; margin-bottom: 0; padding: 8px 10px; background: #fafdff; width: 100%; box-sizing: border-box;}
-textarea { min-height: 44px;}
-.flex-row {display: flex; gap: 20px; margin-top:6px;margin-bottom:2px}
-button, .btn {margin-top:22px;font-size:1.08em; border:none;background:linear-gradient(90deg,#0076ec 60%,#22b8cf 100%); color:#fff; padding:13px 45px; border-radius: 9px; font-weight:600;}
-button:hover, .btn:hover { background:#015a9f; }
-#modal {display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(10,34,80,0.26);justify-content:center;align-items:center;z-index:9999}
-#modal .modal-inner {
-  background: linear-gradient(150deg, #ffe666 68%, #ffd028 103%);
-  color: #361800;
-  padding: 42px 45px 30px 45px; min-width:330px; max-width:400px;
-  border-radius: 17px; box-shadow: 0 7px 34px 0 rgba(90,66,2,0.14);
-  font-size: 1.21em;font-weight: 600;text-align:center; border:2.5px solid #FFEE95;}
-#modal .modal-inner button {
-  background: #fffbe0;border: 2px solid #ffc400;color: #e79114;
-  font-size:1.07em;padding: 8px 31px;border-radius: 9px; margin:15px 5px 0 5px;}
-#modal .modal-inner button:hover {background:#ffe178;}
-</style>
+    <meta charset="UTF-8">
+    <title>Проверка возвратных заказов</title>
+    <meta name="viewport" content="width=660, initial-scale=1">
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6f8fa; color: #1a2340; margin: 0; padding: 20px;}
+        h2 { text-align: center; margin-top: 22px; }
+        .section { background: #fff; border-radius: 18px; box-shadow: 0 4px 38px 0 #dae5fa22; padding: 24px 30px; margin: 0 auto 30px auto; max-width: 610px;}
+        label { font-size: 1.08em; display: block; margin-top: 16px; }
+        input[type="text"], textarea, input[type="date"] {
+          font-size: 1em; border-radius: 6px; border: 1.5px solid #cdd6e6;
+          margin-top: 5px; margin-bottom: 0; padding: 8px 10px; background: #fafdff; width: 100%; box-sizing: border-box;}
+        textarea { min-height: 44px;}
+        .flex-row {display: flex; gap: 20px; margin-top:6px;margin-bottom:2px}
+        button, .btn {margin-top:22px;font-size:1.08em; border:none;background:linear-gradient(90deg,#0076ec 60%,#22b8cf 100%); color:#fff; padding:13px 45px; border-radius: 9px; font-weight:600; cursor: pointer;}
+        button:hover, .btn:hover { background:#015a9f; }
+        #modal {display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(10,34,80,0.26);justify-content:center;align-items:center;z-index:9999}
+        #modal .modal-inner {
+          background: linear-gradient(150deg, #ffe666 68%, #ffd028 103%);
+          color: #361800;
+          padding: 42px 45px 30px 45px; min-width:330px; max-width:400px;
+          border-radius: 17px; box-shadow: 0 7px 34px 0 rgba(90,66,2,0.14);
+          font-size: 1.21em;font-weight: 600;text-align:center; border:2.5px solid #FFEE95;}
+        #modal .modal-inner button {
+          background: #fffbe0;border: 2px solid #ffc400;color: #e79114;
+          font-size:1.07em;padding: 8px 31px;border-radius: 9px; margin:15px 5px 0 5px; cursor: pointer;}
+        #modal .modal-inner button:hover {background:#ffe178;}
+        .debug-info {
+          background: #f8f9fa;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+          padding: 10px;
+          margin-top: 10px;
+          font-family: monospace;
+          font-size: 0.9em;
+          max-height: 200px;
+          overflow-y: auto;
+          display: none;
+        }
+        .debug-toggle {
+          background: #6c757d;
+          color: white;
+          border: none;
+          padding: 5px 10px;
+          border-radius: 3px;
+          cursor: pointer;
+          font-size: 0.8em;
+          margin-top: 10px;
+        }
+        #csvOrdersTable {width:100%; border-collapse:collapse; margin-top:15px;}
+        #csvOrdersTable th, #csvOrdersTable td {border:1px solid #ddd; padding:8px; text-align:left;}
+        #csvOrdersTable th {background:#f2f2f2; font-weight:bold;}
+        #csvOrdersTable tr:hover {background:#f5f5f5; cursor:pointer;}
+    </style>
 </head>
 <body>
-<h2>Проверка возвратных заказов</h2>
-<div id="modal">
-  <div class="modal-inner">
-    <span id="modalText"></span><br>
-    <button type="button" onclick="closeModal(true)">Понятно</button>
-    <button type="button" onclick="closeModal(false)">Отмена</button>
-  </div>
-</div>
-<div class="section">
-  <form id="manualForm" autocomplete="off">
-    <label>Номер заказа:<input type="text" id="orderNum" required></label>
-    <label>Номер клиентского возврата:<input type="text" id="clientReturnNum" required></label>
-    <label>Название СД:<input type="text" id="sdName" required></label>
-    <label>Название магазина:<input type="text" id="storeName" required></label>
-    <label>Содержимое заказа:<textarea id="orderContent" required></textarea></label>
-    <label>Причина возврата от клиента:<textarea id="returnReason"></textarea></label>
-    <label>Вскрыта товарная упаковка?</label>
-    <div class="flex-row">
-      <label><input type="radio" name="packingOpened" value="Да" required>Да</label>
-      <label><input type="radio" name="packingOpened" value="Нет" required>Нет</label>
+    <h2>Проверка возвратных заказов</h2>
+    <div id="modal">
+        <div class="modal-inner">
+            <span id="modalText"></span><br>
+            <button type="button" onclick="closeModal(true)">Понятно</button>
+            <button type="button" onclick="closeModal(false)">Отмена</button>
+        </div>
     </div>
-    <label>Повреждена товарная упаковка?</label>
-    <div class="flex-row">
-      <label><input type="radio" name="packingDamaged" value="Да" required>Да</label>
-      <label><input type="radio" name="packingDamaged" value="Нет" required>Нет</label>
+    <div class="section">
+        <form id="manualForm" autocomplete="off">
+            <label>Номер заказа:<input type="text" id="orderNum" required></label>
+            <label>Номер клиентского возврата:<input type="text" id="clientReturnNum" required></label>
+            <label>Название СД:<input type="text" id="sdName" required></label>
+            <label>Название магазина:<input type="text" id="storeName" required></label>
+            <label>Содержимое заказа:<textarea id="orderContent" required></textarea></label>
+            <label>Причина возврата от клиента:<textarea id="returnReason"></textarea></label>
+            <label>Вскрыта товарная упаковка?</label>
+            <div class="flex-row">
+                <label><input type="radio" name="packingOpened" value="Да" required>Да</label>
+                <label><input type="radio" name="packingOpened" value="Нет" required>Нет</label>
+            </div>
+            <label>Повреждена товарная упаковка?</label>
+            <div class="flex-row">
+                <label><input type="radio" name="packingDamaged" value="Да" required>Да</label>
+                <label><input type="radio" name="packingDamaged" value="Нет" required>Нет</label>
+            </div>
+            <label>Повреждение товара?</label>
+            <div class="flex-row">
+                <label><input type="radio" name="goodDamaged" value="Да" required>Да</label>
+                <label><input type="radio" name="goodDamaged" value="Нет" required>Нет</label>
+            </div>
+            <label>Товар БУ?</label>
+            <div class="flex-row">
+                <label><input type="radio" name="goodUsed" value="Да" required>Да</label>
+                <label><input type="radio" name="goodUsed" value="Нет" required>Нет</label>
+            </div>
+            <label>Фактический размер:<input type="text" id="actualSize"></label>
+            <label>Комментарии по возврату:<textarea id="comment"></textarea></label>
+            <label>Дата проверки:<input type="date" id="dateChecked" required></label>
+            <label>Тикет/акт:<input type="text" id="ticketAct"></label>
+            <label>Есть акт нрп?</label>
+            <div class="flex-row">
+                <label><input type="radio" name="nrp" value="Да" required>Да</label>
+                <label><input type="radio" name="nrp" value="Нет" required>Нет</label>
+            </div>
+            <label>Пересорт:</label>
+            <div class="flex-row">
+                <label><input type="radio" name="peresort" value="Да" required>Да</label>
+                <label><input type="radio" name="peresort" value="Нет" required>Нет</label>
+            </div>
+            <label>Отправляем в АСЦ?</label>
+            <div class="flex-row">
+                <label><input type="radio" name="toASC" value="Да" required>Да</label>
+                <label><input type="radio" name="toASC" value="Нет" required>Нет</label>
+            </div>
+            <div id="serialBlock" style="display:none">
+                <label>Серийный номер:<input type="text" id="serialNum"></label>
+            </div>
+            <label>Шк товара:<input type="text" id="barcode" required></label>
+            <label>Результат проверки:<input type="text" id="orderResult"></label>
+
+            <button type="submit" class="btn">Проверить заказ и СОХРАНИТЬ</button>
+            <button type="button" class="debug-toggle" onclick="toggleDebug()">Показать отладку</button>
+            <div id="debugInfo" class="debug-info"></div>
+        </form>
+        <div id="msg"></div>
     </div>
-    <label>Повреждение товара?</label>
-    <div class="flex-row">
-      <label><input type="radio" name="goodDamaged" value="Да" required>Да</label>
-      <label><input type="radio" name="goodDamaged" value="Нет" required>Нет</label>
+    <div class="section">
+        <h4>Массовая загрузка (CSV/TSV)</h4>
+        <input type="file" id="csvInput" accept=".csv,.tsv,.txt">
+        <div id="csvOrders"></div>
     </div>
-    <label>Товар БУ?</label>
-    <div class="flex-row">
-      <label><input type="radio" name="goodUsed" value="Да" required>Да</label>
-      <label><input type="radio" name="goodUsed" value="Нет" required>Нет</label>
-    </div>
-    <label>Фактический размер:<input type="text" id="actualSize"></label>
-    <label>Комментарии по возврату:<textarea id="comment"></textarea></label>
-    <label>Дата проверки:<input type="date" id="dateChecked" required></label>
-    <label>Тикет/акт:<input type="text" id="ticketAct"></label>
-    <label>Есть акт нрп?</label>
-    <div class="flex-row">
-      <label><input type="radio" name="nrp" value="Да" required>Да</label>
-      <label><input type="radio" name="nrp" value="Нет" required>Нет</label>
-    </div>
-    <label>Пересорт:</label>
-    <div class="flex-row">
-      <label><input type="radio" name="peresort" value="Да" required>Да</label>
-      <label><input type="radio" name="peresort" value="Нет" required>Нет</label>
-    </div>
-    <label>Отправляем в АСЦ?</label>
-    <div class="flex-row">
-      <label><input type="radio" name="toASC" value="Да" required>Да</label>
-      <label><input type="radio" name="toASC" value="Нет" required>Нет</label>
-    </div>
-    <div id="serialBlock" style="display:none">
-      <label>Серийный номер:<input type="text" id="serialNum"></label>
-    </div>
-    <label>Шк товара:<input type="text" id="barcode" required></label>
-    <label>Результат проверки:<input type="text" id="orderResult"></label>
-    <button type="submit" class="btn">Проверить заказ и СОХРАНИТЬ</button>
-  </form>
-  <div id="msg"></div>
-</div>
-<div class="section">
-  <h4>Массовая загрузка (CSV/TSV)</h4>
-  <input type="file" id="csvInput" accept=".csv,.tsv,.txt">
-  <div id="csvOrders"></div>
-</div>
-<script>
-let loadedOrders = [];
-function norm(val){return (val||'').replace(/\s/g,'').toLowerCase();}
-function lookupOrder(){
-  const num=document.getElementById('orderNum').value.trim();
-  const ret=document.getElementById('clientReturnNum').value.trim();
-  if(!num&&!ret)return null;
-  return loadedOrders.find(order=>
-    (num&&norm(order["Номер заказа"])===norm(num))||
-    (ret&&norm(order["Номер клиентского возврата"])===norm(ret))
-  );
-}
-let autofillLock=false;
-function tryAutoFillForm(){
-  if(autofillLock)return;
-  const order=lookupOrder();
-  if(!order)return;
-  autofillLock=true;
-  document.getElementById('orderNum').value=order["Номер заказа"]||'';
-  document.getElementById('clientReturnNum').value=order["Номер клиентского возврата"]||'';
-  document.getElementById('sdName').value=order["Название СД"]||'';
-  document.getElementById('storeName').value=order["Название магазина"]||'';
-  document.getElementById('orderContent').value=order["Содержимое заказа"]||'';
-  document.getElementById('returnReason').value=order["Причина возврата от клиента"]||'';
-  document.getElementById('actualSize').value=order["Фактический размер"]||'';
-  document.getElementById('comment').value=order["Комментарии по возврату"]||'';
-  document.getElementById('dateChecked').value=order["Дата проверки"]||'';
-  document.getElementById('ticketAct').value=order["Тикет/акт"]||'';
-  document.getElementById('serialNum').value=order["Серийный номер"]||'';
-  document.getElementById('barcode').value=order["Шк товара"]||'';
-  document.getElementById('orderResult').value=order["Результат проверки"]||'';
-  
-  // Заполняем радиокнопки по соответствию названий
-  const radioMapping = {
-    "Вскрыта товарная упаковка?": "packingOpened",
-    "Повреждена товарная упаковка?": "packingDamaged",
-    "Повреждение товара?": "goodDamaged",
-    "Товар БУ?": "goodUsed",
-    "Есть акт нрп?": "nrp",
-    "Пересорт": "peresort",
-    "Отправляем в АСЦ?": "toASC"
-  };
-  
-  Object.entries(radioMapping).forEach(([csvField, htmlName]) => {
-    const value = order[csvField];
-    if (value) {
-      const radios = document.querySelectorAll(`input[name="${htmlName}"]`);
-      radios.forEach(radio => {
-        radio.checked = (radio.value === value);
-      });
-    }
-  });
-  
-  autofillLock=false;
-  updateDynamicFields();
-}
-['input','change'].forEach(ev=>{
-  document.getElementById('orderNum').addEventListener(ev,tryAutoFillForm);
-  document.getElementById('clientReturnNum').addEventListener(ev,tryAutoFillForm);
-});
-function fillOrderFromCSV(order){
-  document.getElementById('orderNum').value=order["Номер заказа"]||'';
-  document.getElementById('clientReturnNum').value=order["Номер клиентского возврата"]||'';
-  document.getElementById('sdName').value=order["Название СД"]||'';
-  document.getElementById('storeName').value=order["Название магазина"]||'';
-  document.getElementById('orderContent').value=order["Содержимое заказа"]||'';
-  document.getElementById('returnReason').value=order["Причина возврата от клиента"]||'';
-  document.getElementById('actualSize').value=order["Фактический размер"]||'';
-  document.getElementById('comment').value=order["Комментарии по возврату"]||'';
-  document.getElementById('dateChecked').value=order["Дата проверки"]||'';
-  document.getElementById('ticketAct').value=order["Тикет/акт"]||'';
-  document.getElementById('serialNum').value=order["Серийный номер"]||'';
-  document.getElementById('barcode').value=order["Шк товара"]||'';
-  document.getElementById('orderResult').value=order["Результат проверки"]||'';
-  
-  const radioMapping = {
-    "Вскрыта товарная упаковка?": "packingOpened",
-    "Повреждена товарная упаковка?": "packingDamaged",
-    "Повреждение товара?": "goodDamaged",
-    "Товар БУ?": "goodUsed",
-    "Есть акт нрп?": "nrp",
-    "Пересорт": "peresort",
-    "Отправляем в АСЦ?": "toASC"
-  };
-  
-  Object.entries(radioMapping).forEach(([csvField, htmlName]) => {
-    const value = order[csvField];
-    if (value) {
-      const radios = document.querySelectorAll(`input[name="${htmlName}"]`);
-      radios.forEach(radio => {
-        radio.checked = (radio.value === value);
-      });
-    }
-  });
-  
-  updateDynamicFields();
-}
-function detectDelimiter(s){let line=s.split(/\r?\n/)[0];if(line.indexOf('\t')!==-1)return'\t';if(line.indexOf(';')!==-1)return';';return',';}
-document.getElementById('csvInput').addEventListener('change',function(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(evt){
-    let text=evt.target.result;
-    text=text.split(/\r?\n/).filter(line=>line.trim().length>0).join('\n');
-    let delimiter=detectDelimiter(text);
-    const lines=text.split(/\r?\n/).filter(l=>l.trim()!=='');
-    const headers=lines[0].split(delimiter).map(h=>h.trim());
-    loadedOrders=[];
-    let html = '<table id="csvOrdersTable"><tr>' + headers.map(h=>`<th>${h}</th>`).join('') + '</tr>';
-    for(let i=1;i<lines.length;i++){
-      const row=lines[i].split(delimiter);
-      while(row.length<headers.length)row.push('');
-      html+=`<tr data-idx="${i-1}">${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`;
-      let order = {};
-      for(let j=0;j<headers.length;j++){
-        order[headers[j]] = row[j].trim();
-      }
-      loadedOrders.push(order);
-    }
-    html+='</table>';
-    document.getElementById('csvOrders').innerHTML=html;
-    document.querySelectorAll('#csvOrdersTable tr[data-idx]').forEach(function(tr){
-      tr.onclick=function(){
-        const idx=+this.getAttribute('data-idx');
-        fillOrderFromCSV(loadedOrders[idx]);
-      }
-    });
-  };
-  reader.readAsText(file,'utf-8');
-});
-function updateDynamicFields(){
-  let showSerial=getRadio('toASC')==='Да';
-  if(document.getElementById('serialBlock')){
-    document.getElementById('serialBlock').style.display=showSerial?'':'none';
-    let serialEl=document.getElementById('serialNum');
-    if(serialEl)serialEl.required=showSerial;
-    if(!showSerial&&serialEl)serialEl.value='';
-  }
-}
-['change','input'].forEach(ev=>{
-  document.getElementsByName('peresort').forEach(e=>e.addEventListener(ev,updateDynamicFields));
-  document.getElementsByName('toASC').forEach(e=>e.addEventListener(ev,updateDynamicFields));
-});
-updateDynamicFields();
-function showModal(msg,cb){
-  document.getElementById('modalText').textContent=msg;
-  document.getElementById('modal').style.display="flex";
-  closeModal.cb=cb;
-}
-function closeModal(confirm){
-  document.getElementById('modal').style.display="none";
-  if(confirm&&typeof closeModal.cb==="function"){closeModal.cb();}
-  closeModal.cb=null;
-}
-function getRadio(name){
-  let e=document.querySelector('input[name="'+name+'"]:checked');
-  return e?e.value.trim():"";
-}
-document.getElementById('manualForm').onsubmit=function(e){
-  e.preventDefault();
-  updateDynamicFields();
-  const actNrp=getRadio("nrp");
-  if(actNrp==="Да"){showModal("Заказ должен быть утилизирован",submitAndSave);return false;}
-  const packingOpened=getRadio("packingOpened");
-  const packingDamaged=getRadio("packingDamaged");
-  const goodDamaged=getRadio("goodDamaged");
-  const goodUsed=getRadio("goodUsed");
-  const toASC=getRadio("toASC");
-  const peresort=getRadio("peresort");
-  if((packingOpened==="Да"&&goodUsed==="Да")||(packingDamaged==="Да"&&goodUsed==="Да")){
-    showModal("Положи в ячейку БУ",submitAndSave);return false;}
-  if(peresort==="Да"){showModal("Положи в пересорт",submitAndSave);return false;}
-  if(toASC==="Да"){showModal("Положи в АСЦ, после возвращения, определи его в БУ",submitAndSave);return false;}
-  if(goodUsed==="Да"){showModal("Положи в БУ",submitAndSave);return false;}
-  if(goodDamaged==="Да"){showModal("Положи в брак",submitAndSave);return false;}
-  if(packingOpened==="Да"){showModal("Положи в уценку",submitAndSave);return false;}
-  if(packingDamaged==="Да"){showModal("Положи в уценку",submitAndSave);return false;}
-  if(packingOpened==="Нет"&&packingDamaged==="Нет"&&goodDamaged==="Нет"&&goodUsed==="Нет"&&toASC==="Нет"&&peresort==="Нет"){
-    showModal("Положи в годный",submitAndSave);return false;}
-  submitAndSave();
-  return false;
-};
-function showToast(message,type="info"){
-  const colors={success:"#4caf50",error:"#f44336",info:"#2196f3"};
-  const toast=document.createElement("div");
-  toast.textContent=message;
-  toast.style.cssText=`
-    min-width:220px; max-width:350px; margin-bottom:10px;
-    padding: 16px 22px; color: #fff; background: ${colors[type]||'#333'};
-    border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    font-size: 1.12em; font-family: inherit; 
-    opacity:0; transition: opacity .3s;
-    position: fixed; top: 30px; right: 25px; z-index: 13000;
-  `;
-  document.body.appendChild(toast);
-  setTimeout(()=>toast.style.opacity="1",80);
-  setTimeout(()=>{toast.style.opacity="0";setTimeout(()=>toast.remove(),400);},3400);
-}
-async function submitAndSave(){
-  console.log("=== ОТПРАВКА ДАННЫХ ===");
-  
-  // ВАЖНО: ВСЕ 20 полей в ТОЧНОМ порядке как в Excel таблице!
-  const data = {
-    "Номер заказа": document.getElementById('orderNum').value.trim(),
-    "Номер клиентского возврата": document.getElementById('clientReturnNum').value.trim(),
-    "Название СД": document.getElementById('sdName').value.trim(),
-    "Название магазина": document.getElementById('storeName').value.trim(),
-    "Содержимое заказа": document.getElementById('orderContent').value.trim(),
-    "Причина возврата от клиента": document.getElementById('returnReason').value.trim(),
-    "Вскрыта товарная упаковка?": getRadio('packingOpened'),
-    "Повреждена товарная упаковка?": getRadio('packingDamaged'),
-    "Повреждение товара?": getRadio('goodDamaged'),
-    "Товар БУ?": getRadio('goodUsed'),
-    "Фактический размер": document.getElementById('actualSize').value.trim(), // 11-е поле - ВАЖНО!
-    "Комментарии по возврату": document.getElementById('comment').value.trim(),
-    "Дата проверки": document.getElementById('dateChecked').value,
-    "Тикет/акт": document.getElementById('ticketAct').value.trim(),
-    "Есть акт нрп?": getRadio('nrp'),
-    "Пересорт": getRadio("peresort"),
-    "Отправляем в АСЦ?": getRadio("toASC"),
-    "Серийный номер": document.getElementById('serialNum').value.trim(),
-    "Шк товара": document.getElementById('barcode').value.trim(),
-    "Результат проверки": document.getElementById('orderResult').value.trim()
-  };
-  
-  // ДИАГНОСТИКА: проверяем порядок ВСЕХ 20 полей
-  console.log("=== ПРОВЕРКА ВСЕХ 20 ПОЛЕЙ ===");
-  const expectedOrder = [
-    "Номер заказа",                    // 1 (A)
-    "Номер клиентского возврата",      // 2 (B)
-    "Название СД",                     // 3 (C)
-    "Название магазина",               // 4 (D)
-    "Содержимое заказа",               // 5 (E)
-    "Причина возврата от клиента",     // 6 (F)
-    "Вскрыта товарная упаковка?",      // 7 (G)
-    "Повреждена товарная упаковка?",   // 8 (H)
-    "Повреждение товара?",             // 9 (I)
-    "Товар БУ?",                       // 10 (J)
-    "Фактический размер",              // 11 (K) ← ВНИМАНИЕ!
-    "Комментарии по возврату",         // 12 (L)
-    "Дата проверки",                   // 13 (M)
-    "Тикет/акт",                       // 14 (N)
-    "Есть акт нрп?",                   // 15 (O)
-    "Пересорт",                        // 16 (P)
-    "Отправляем в АСЦ?",               // 17 (Q)
-    "Серийный номер",                  // 18 (R)
-    "Шк товара",                       // 19 (S)
-    "Результат проверки"               // 20 (T)
-  ];
-  
-  let allFieldsPresent = true;
-  expectedOrder.forEach((field, index) => {
-    const value = data[field] !== undefined ? `"${data[field]}"` : "(не определено)";
-    console.log(`${index + 1}. ${field}: ${value}`);
-    
-    if (data[field] === undefined) {
-      console.error(`❌ ПОЛЕ ОТСУТСТВУЕТ: ${field}`);
-      allFieldsPresent = false;
-    }
-  });
-  
-  if (!allFieldsPresent) {
-    showToast("❌ Ошибка: не все поля определены","error");
-    return;
-  }
-  
-  console.log("✅ Все 20 полей присутствуют");
-  console.log("Отправляемый JSON:", JSON.stringify(data, null, 2));
-  
-  try {
-    const resp = await fetch(
-      "https://heck-evsc.onrender.com/proxy",
-      {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {"Content-Type": "application/json"}
-      }
-    );
-    const txt = await resp.text();
-    console.log("Ответ от прокси:", txt);
-    
-    if(resp.ok && (txt.includes("OK") || txt.includes("success") || txt.trim() === "OK")){
-      showToast("✅ Данные успешно отправлены!","success");
-      
-      setTimeout(() => {
-        document.getElementById('manualForm').reset();
+    <script>
+        // ⚠️ ВАЖНО: ВСТАВЬТЕ СЮДА ВАШ URL GOOGLE APPS SCRIPT! ⚠️
+        const GOOGLE_SCRIPT_URL = https://script.google.com/macros/s/AKfycbwPxMEpL94-hDpY0BtuzbMnPVukskOhPAXzitOGSTLP_6YJxXoRHMWjyKk4hHFxNkYYgA/exec;
+
+        let loadedOrders = [];
+        let debugEnabled = false;
+
+        function toggleDebug() {
+            debugEnabled = !debugEnabled;
+            const debugEl = document.getElementById('debugInfo');
+            debugEl.style.display = debugEnabled ? 'block' : 'none';
+            document.querySelector('.debug-toggle').textContent = debugEnabled ? 'Скрыть отладку' : 'Показать отладку';
+        }
+
+        function debugLog(message) {
+            console.log(message);
+            if (debugEnabled) {
+                const debugInfo = document.getElementById('debugInfo');
+                const now = new Date().toLocaleTimeString();
+                debugInfo.innerHTML += `<div>[${now}] ${message}</div>`;
+                debugInfo.scrollTop = debugInfo.scrollHeight;
+            }
+        }
+
+        function norm(val){return (val||'').toString().replace(/\s/g,'').toLowerCase();}
+
+        function lookupOrder(){
+            const num = document.getElementById('orderNum').value.trim();
+            const ret = document.getElementById('clientReturnNum').value.trim();
+            if(!num && !ret) return null;
+            return loadedOrders.find(order =>
+                (num && norm(order["Номер заказа"]) === norm(num)) ||
+                (ret && norm(order["Номер клиентского возврата"]) === norm(ret))
+            );
+        }
+
+        let autofillLock = false;
+        function tryAutoFillForm(){
+            if(autofillLock) return;
+            const order = lookupOrder();
+            if(!order) return;
+            autofillLock = true;
+
+            // Заполняем текстовые поля
+            const fields = {
+                'orderNum': 'Номер заказа',
+                'clientReturnNum': 'Номер клиентского возврата',
+                'sdName': 'Название СД',
+                'storeName': 'Название магазина',
+                'orderContent': 'Содержимое заказа',
+                'returnReason': 'Причина возврата от клиента',
+                'actualSize': 'Фактический размер',
+                'comment': 'Комментарии по возврату',
+                'dateChecked': 'Дата проверки',
+                'ticketAct': 'Тикет/акт',
+                'serialNum': 'Серийный номер',
+                'barcode': 'Шк товара',
+                'orderResult': 'Результат проверки'
+            };
+
+            Object.entries(fields).forEach(([id, key]) => {
+                const element = document.getElementById(id);
+                if (element && order[key] !== undefined) {
+                    element.value = order[key] || '';
+                }
+            });
+
+            // Заполняем радиокнопки
+            const radioMapping = {
+                "Вскрыта товарная упаковка?": "packingOpened",
+                "Повреждена товарная упаковка?": "packingDamaged",
+                "Повреждение товара?": "goodDamaged",
+                "Товар БУ?": "goodUsed",
+                "Есть акт нрп?": "nrp",
+                "Пересорт": "peresort",
+                "Отправляем в АСЦ?": "toASC"
+            };
+
+            Object.entries(radioMapping).forEach(([csvField, htmlName]) => {
+                const value = order[csvField];
+                if (value) {
+                    const radios = document.querySelectorAll(`input[name="${htmlName}"]`);
+                    radios.forEach(radio => {
+                        if (radio.value === value) radio.checked = true;
+                    });
+                }
+            });
+
+            autofillLock = false;
+            updateDynamicFields();
+        }
+
+        ['input','change'].forEach(ev => {
+            document.getElementById('orderNum').addEventListener(ev, tryAutoFillForm);
+            document.getElementById('clientReturnNum').addEventListener(ev, tryAutoFillForm);
+        });
+
+        function fillOrderFromCSV(order){
+            const fields = {
+                'orderNum': 'Номер заказа',
+                'clientReturnNum': 'Номер клиентского возврата',
+                'sdName': 'Название СД',
+                'storeName': 'Название магазина',
+                'orderContent': 'Содержимое заказа',
+                'returnReason': 'Причина возврата от клиента',
+                'actualSize': 'Фактический размер',
+                'comment': 'Комментарии по возврату',
+                'dateChecked': 'Дата проверки',
+                'ticketAct': 'Тикет/акт',
+                'serialNum': 'Серийный номер',
+                'barcode': 'Шк товара',
+                'orderResult': 'Результат проверки'
+            };
+
+            Object.entries(fields).forEach(([id, key]) => {
+                const element = document.getElementById(id);
+                if (element && order[key] !== undefined) {
+                    element.value = order[key] || '';
+                }
+            });
+
+            const radioMapping = {
+                "Вскрыта товарная упаковка?": "packingOpened",
+                "Повреждена товарная упаковка?": "packingDamaged",
+                "Повреждение товара?": "goodDamaged",
+                "Товар БУ?": "goodUsed",
+                "Есть акт нрп?": "nrp",
+                "Пересорт": "peresort",
+                "Отправляем в АСЦ?": "toASC"
+            };
+
+            Object.entries(radioMapping).forEach(([csvField, htmlName]) => {
+                const value = order[csvField];
+                if (value) {
+                    const radios = document.querySelectorAll(`input[name="${htmlName}"]`);
+                    radios.forEach(radio => {
+                        if (radio.value === value) radio.checked = true;
+                    });
+                }
+            });
+
+            updateDynamicFields();
+        }
+
+        function detectDelimiter(s){
+            let line = s.split(/\r?\n/)[0];
+            if(line.indexOf('\t') !== -1) return '\t';
+            if(line.indexOf(';') !== -1) return ';';
+            return ',';
+        }
+
+        document.getElementById('csvInput').addEventListener('change', function(e){
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt){
+                let text = evt.target.result;
+                text = text.split(/\r?\n/).filter(line => line.trim().length > 0).join('\n');
+
+                let delimiter = detectDelimiter(text);
+                const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+                if(lines.length === 0) return;
+
+                const headers = lines[0].split(delimiter).map(h => h.trim());
+                loadedOrders = [];
+
+                let html = '<table id="csvOrdersTable"><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+                for(let i = 1; i < lines.length; i++){
+                    const row = lines[i].split(delimiter);
+                    while(row.length < headers.length) row.push('');
+                    html += `<tr data-idx="${i-1}">${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+                    let order = {};
+                    for(let j = 0; j < headers.length; j++){
+                        order[headers[j]] = row[j].trim();
+                    }
+                    loadedOrders.push(order);
+                }
+                html += '</table>';
+                document.getElementById('csvOrders').innerHTML = html;
+
+                document.querySelectorAll('#csvOrdersTable tr[data-idx]').forEach(function(tr){
+                    tr.onclick = function(){
+                        const idx = +this.getAttribute('data-idx');
+                        fillOrderFromCSV(loadedOrders[idx]);
+                    };
+                });
+            };
+            reader.readAsText(file, 'utf-8');
+        });
+
+        function updateDynamicFields(){
+            let showSerial = getRadio('toASC') === 'Да';
+            const serialBlock = document.getElementById('serialBlock');
+            if(serialBlock){
+                serialBlock.style.display = showSerial ? 'block' : 'none';
+                let serialEl = document.getElementById('serialNum');
+                if(serialEl) serialEl.required = showSerial;
+                if(!showSerial && serialEl) serialEl.value = '';
+            }
+        }
+
+        ['change','input'].forEach(ev => {
+            document.querySelectorAll('input[name="peresort"]').forEach(e => e.addEventListener(ev, updateDynamicFields));
+            document.querySelectorAll('input[name="toASC"]').forEach(e => e.addEventListener(ev, updateDynamicFields));
+        });
+
         updateDynamicFields();
-        showToast("✅ Форма очищена. Проверьте таблицу.","success");
-      }, 1000);
-      
-    } else {
-      showToast("❌ Ошибка: " + txt,"error");
-    }
-  } catch(err) {
-    console.error("Ошибка связи:", err);
-    showToast("❌ Ошибка связи с сервером","error");
-  }
-}
-</script>
+
+        function showModal(msg, cb){
+            document.getElementById('modalText').textContent = msg;
+            document.getElementById('modal').style.display = "flex";
+            closeModal.cb = cb;
+        }
+
+        function closeModal(confirm){
+            document.getElementById('modal').style.display = "none";
+            if(confirm && typeof closeModal.cb === "function"){ closeModal.cb(); }
+            closeModal.cb = null;
+        }
+
+        function getRadio(name){
+            let e = document.querySelector('input[name="' + name + '"]:checked');
+            return e ? e.value.trim() : "";
+        }
+
+        document.getElementById('manualForm').onsubmit = function(e){
+            e.preventDefault();
+            updateDynamicFields();
+
+            const actNrp = getRadio("nrp");
+            if(actNrp === "Да"){ showModal("Заказ должен быть утилизирован", submitAndSave); return false; }
+
+            const packingOpened = getRadio("packingOpened");
+            const packingDamaged = getRadio("packingDamaged");
+            const goodDamaged = getRadio("goodDamaged");
+            const goodUsed = getRadio("goodUsed");
+            const toASC = getRadio("toASC");
+            const peresort = getRadio("peresort");
+
+            if((packingOpened === "Да" && goodUsed === "Да") || (packingDamaged === "Да" && goodUsed === "Да")){
+                showModal("Положи в ячейку БУ", submitAndSave); return false;
+            }
+            if(peresort === "Да"){ showModal("Положи в пересорт", submitAndSave); return false; }
+            if(toASC === "Да"){ showModal("Положи в АСЦ, после возвращения, определи его в БУ", submitAndSave); return false; }
+            if(goodUsed === "Да"){ showModal("Положи в БУ", submitAndSave); return false; }
+            if(goodDamaged === "Да"){ showModal("Положи в брак", submitAndSave); return false; }
+            if(packingOpened === "Да"){ showModal("Положи в уценку", submitAndSave); return false; }
+            if(packingDamaged === "Да"){ showModal("Положи в уценку", submitAndSave); return false; }
+            if(packingOpened === "Нет" && packingDamaged === "Нет" && goodDamaged === "Нет" && goodUsed === "Нет" && toASC === "Нет" && peresort === "Нет"){
+                showModal("Положи в годный", submitAndSave); return false;
+            }
+            submitAndSave();
+            return false;
+        };
+
+        function showToast(message, type = "info"){
+            const colors = {success: "#4caf50", error: "#f44336", info: "#2196f3"};
+            const toast = document.createElement("div");
+            toast.textContent = message;
+            toast.style.cssText = `
+                min-width: 220px; max-width: 350px; margin-bottom: 10px;
+                padding: 16px 22px; color: #fff; background: ${colors[type] || '#333'};
+                border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                font-size: 1.12em; font-family: inherit;
+                opacity: 0; transition: opacity .3s;
+                position: fixed; top: 30px; right: 25px; z-index: 13000;
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.style.opacity = "1", 80);
+            setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => toast.remove(), 400); }, 3400);
+        }
+
+        async function submitAndSave(){
+            debugLog("=== НАЧАЛО ОТПРАВКИ ДАННЫХ ===");
+            debugLog("Время: " + new Date().toISOString());
+
+            // ВАЖНО: Все 20 полей в точном порядке, как в Excel
+            const data = {
+                "Номер заказа": document.getElementById('orderNum').value.trim(),
+                "Номер клиентского возврата": document.getElementById('clientReturnNum').value.trim(),
+                "Название СД": document.getElementById('sdName').value.trim(),
+                "Название магазина": document.getElementById('storeName').value.trim(),
+                "Содержимое заказа": document.getElementById('orderContent').value.trim(),
+                "Причина возврата от клиента": document.getElementById('returnReason').value.trim(),
+                "Вскрыта товарная упаковка?": getRadio('packingOpened'),
+                "Повреждена товарная упаковка?": getRadio('packingDamaged'),
+                "Повреждение товара?": getRadio('goodDamaged'),
+                "Товар БУ?": getRadio('goodUsed'),
+                "Фактический размер": document.getElementById('actualSize').value.trim(), // 11-е поле - КЛЮЧЕВОЕ!
+                "Комментарии по возврату": document.getElementById('comment').value.trim(),
+                "Дата проверки": document.getElementById('dateChecked').value,
+                "Тикет/акт": document.getElementById('ticketAct').value.trim(),
+                "Есть акт нрп?": getRadio('nrp'),
+                "Пересорт": getRadio("peresort"),
+                "Отправляем в АСЦ?": getRadio("toASC"),
+                "Серийный номер": document.getElementById('serialNum').value.trim(),
+                "Шк товара": document.getElementById('barcode').value.trim(),
+                "Результат проверки": document.getElementById('orderResult').value.trim()
+            };
+
+            // Диагностика: проверяем ВСЕ 20 полей
+            debugLog("=== ПРОВЕРКА ВСЕХ 20 ПОЛЕЙ ===");
+            const expectedOrder = [
+                "Номер заказа",                    // 1 (A)
+                "Номер клиентского возврата",      // 2 (B)
+                "Название СД",                     // 3 (C)
+                "Название магазина",               // 4 (D)
+                "Содержимое заказа",               // 5 (E)
+                "Причина возврата от клиента",     // 6 (F)
+                "Вскрыта товарная упаковка?",      // 7 (G)
+                "Повреждена товарная упаковка?",   // 8 (H)
+                "Повреждение товара?",             // 9 (I)
+                "Товар БУ?",                       // 10 (J)
+                "Фактический размер",              // 11 (K) ← ВНИМАНИЕ!
+                "Комментарии по возврату",         // 12 (L)
+                "Дата проверки",                   // 13 (M)
+                "Тикет/акт",                       // 14 (N)
+                "Есть акт нрп?",                   // 15 (O)
+                "Пересорт",                        // 16 (P)
+                "Отправляем в АСЦ?",               // 17 (Q)
+                "Серийный номер",                  // 18 (R)
+                "Шк товара",                       // 19 (S)
+                "Результат проверки"               // 20 (T)
+            ];
+
+            let allFieldsPresent = true;
+            expectedOrder.forEach((field, index) => {
+                const value = data[field] !== undefined ? `"${data[field]}"` : "(не определено)";
+                debugLog(`${index + 1}. ${field}: ${value}`);
+                if (data[field] === undefined) {
+                    debugLog(`❌ ПОЛЕ ОТСУТСТВУЕТ: ${field}`);
+                    allFieldsPresent = false;
+                }
+            });
+
+            if (!allFieldsPresent) {
+                showToast("❌ Ошибка: не все поля определены", "error");
+                return;
+            }
+
+            debugLog("✅ Все 20 полей присутствуют");
+            debugLog("Отправляемый JSON: " + JSON.stringify(data, null, 2));
+
+            try {
+                debugLog("📤 Отправляю запрос на: " + GOOGLE_SCRIPT_URL);
+                const resp = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    body: JSON.stringify(data),
+                    headers: {"Content-Type": "application/json"}
+                });
+                const txt = await resp.text();
+                debugLog("📥 Ответ от сервера: " + txt);
+
+                let responseData;
+                try {
+                    responseData = JSON.parse(txt);
+                } catch(e) {
+                    responseData = { message: txt };
+                }
+
+                if(resp.ok) {
+                    if (responseData.status === "success" || txt.includes("OK") || txt.includes("success")) {
+                        showToast("✅ Данные успешно отправлены!", "success");
+                        setTimeout(() => {
+                            document.getElementById('manualForm').reset();
+                            updateDynamicFields();
+                            showToast("✅ Форма очищена. Проверьте таблицу.", "success");
+                        }, 1000);
+                    } else {
+                        showToast(`❌ Ошибка: ${responseData.message || "Неизвестная ошибка"}`, "error");
+                    }
+                } else {
+                    showToast(`❌ Ошибка сервера: ${resp.status} ${responseData.message || txt}`, "error");
+                }
+            } catch(err) {
+                debugLog("❌ Ошибка связи: " + err);
+                showToast("❌ Ошибка связи с сервером", "error");
+            }
+        }
+    </script>
 </body>
 </html>
