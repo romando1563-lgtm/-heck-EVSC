@@ -360,26 +360,51 @@
             updateDynamicFields();
 
             const actNrp = getRadio("nrp");
-            if(actNrp === "Да"){ showModal("Заказ должен быть утилизирован", submitAndSave); return false; }
+            if(actNrp === "Да"){ 
+                showModal("Заказ должен быть утилизирован", submitAndSave); 
+                return false; 
+            }
+
+            const goodDamaged = getRadio("goodDamaged");
+            if(goodDamaged === "Да"){ 
+                showModal("Заказ должен быть утилизирован", submitAndSave); 
+                return false; 
+            }
+
+            const toASC = getRadio("toASC");
+            if(toASC === "Да"){ 
+                showModal("Положи в АСЦ, после возвращения, определи его в БУ", submitAndSave); 
+                return false; 
+            }
 
             const packingOpened = getRadio("packingOpened");
             const packingDamaged = getRadio("packingDamaged");
-            const goodDamaged = getRadio("goodDamaged");
             const goodUsed = getRadio("goodUsed");
-            const toASC = getRadio("toASC");
             const peresort = getRadio("peresort");
 
             if((packingOpened === "Да" && goodUsed === "Да") || (packingDamaged === "Да" && goodUsed === "Да")){
-                showModal("Положи в ячейку БУ", submitAndSave); return false;
+                showModal("Положи в ячейку БУ", submitAndSave); 
+                return false;
             }
-            if(peresort === "Да"){ showModal("Положи в пересорт", submitAndSave); return false; }
-            if(toASC === "Да"){ showModal("Положи в АСЦ, после возвращения, определи его в БУ", submitAndSave); return false; }
-            if(goodUsed === "Да"){ showModal("Положи в БУ", submitAndSave); return false; }
-            if(goodDamaged === "Да"){ showModal("Положи в брак", submitAndSave); return false; }
-            if(packingOpened === "Да"){ showModal("Положи в уценку", submitAndSave); return false; }
-            if(packingDamaged === "Да"){ showModal("Положи в уценку", submitAndSave); return false; }
+            if(peresort === "Да"){ 
+                showModal("Положи в пересорт", submitAndSave); 
+                return false; 
+            }
+            if(goodUsed === "Да"){ 
+                showModal("Положи в БУ", submitAndSave); 
+                return false; 
+            }
+            if(packingOpened === "Да"){ 
+                showModal("Положи в уценку", submitAndSave); 
+                return false; 
+            }
+            if(packingDamaged === "Да"){ 
+                showModal("Положи в уценку", submitAndSave); 
+                return false; 
+            }
             if(packingOpened === "Нет" && packingDamaged === "Нет" && goodDamaged === "Нет" && goodUsed === "Нет" && toASC === "Нет" && peresort === "Нет"){
-                showModal("Положи в годный", submitAndSave); return false;
+                showModal("Положи в годный", submitAndSave); 
+                return false;
             }
             submitAndSave();
             return false;
