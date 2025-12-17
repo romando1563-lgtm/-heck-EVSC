@@ -86,7 +86,9 @@ app.post("/proxy/update-shipped", upload.single('excelFile'), async (req, res) =
   console.log("Время:", new Date().toISOString());
   
   try {
+    // Проверяем, есть ли файл
     if (!req.file) {
+      console.log("❌ Файл не загружен");
       return res.status(400).json({
         status: "error",
         message: "Файл не загружен"
@@ -105,10 +107,11 @@ app.post("/proxy/update-shipped", upload.single('excelFile'), async (req, res) =
     // Преобразуем в JSON
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
     console.log("📊 Данные из Excel:", jsonData.length, "строк");
+    console.log("📋 Содержимое Excel (первые 5 строк):", jsonData.slice(0, 5));
     
-    // Извлекаем номера клиентских возвратов (предполагаем, что они в первом столбце)
+    // Извлекаем номера клиентских возвратов (все строки, начиная с первой)
     const returnNumbers = [];
-    for (let i = 1; i < jsonData.length; i++) { // Начинаем с 1, чтобы пропустить заголовок
+    for (let i = 0; i < jsonData.length; i++) { // НЕ пропускаем первую строку
       const row = jsonData[i];
       if (row && row[0]) {
         const returnNum = row[0].toString().trim();
@@ -118,14 +121,17 @@ app.post("/proxy/update-shipped", upload.single('excelFile'), async (req, res) =
       }
     }
     
-    console.log("📋 Найдено номеров клиентских возвратов:", returnNumbers.length);
+    console.log("📋 Извлеченные номера возвратов:", returnNumbers);
+    console.log("📊 Количество номеров:", returnNumbers.length);
     
     if (returnNumbers.length === 0) {
+      console.log("ℹ️ В файле не найдено номеров клиентских возвратов");
       return res.json({
         status: "success",
         message: "В файле не найдено номеров клиентских возвратов",
         updatedCount: 0,
-        totalChecked: 0
+        totalChecked: 0,
+        returnNumbers: returnNumbers
       });
     }
     
@@ -136,6 +142,8 @@ app.post("/proxy/update-shipped", upload.single('excelFile'), async (req, res) =
       action: "updateShipped",
       returnNumbers: returnNumbers
     };
+    
+    console.log("📤 Данные для отправки в Google:", JSON.stringify(requestData, null, 2));
     
     const response = await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
@@ -148,6 +156,7 @@ app.post("/proxy/update-shipped", upload.single('excelFile'), async (req, res) =
     const responseText = await response.text();
     console.log(`📥 Ответ от Google:`);
     console.log(`Статус: ${response.status}`);
+    console.log(`Текст ответа: ${responseText}`);
     
     // Устанавливаем CORS заголовки
     res.header('Access-Control-Allow-Origin', '*');
