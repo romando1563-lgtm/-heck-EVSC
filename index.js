@@ -34,7 +34,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbD6O1-TmnwDxYoJ7xIEl8axq7ZCBpT1olW79mwL8k6sYxUO5XfljYUA6_vVftNUABdA/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWdr29wlLiEOTEvjbDAnYm7Rrlpx1BzUwYllAI7jg47RHT5OqfaPTH7mT0G05-_nzwjg/exec";
 
 // Основной прокси эндпоинт
 app.post("/proxy", async (req, res) => {
