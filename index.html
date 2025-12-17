@@ -53,9 +53,37 @@
         #csvOrdersTable th, #csvOrdersTable td {border:1px solid #ddd; padding:8px; text-align:left;}
         #csvOrdersTable th {background:#f2f2f2; font-weight:bold;}
         #csvOrdersTable tr:hover {background:#f5f5f5; cursor:pointer;}
+        
+        /* Стили для статуса */
+        #status-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            z-index: 10000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status-online {
+            background: #4caf50;
+            color: white;
+        }
+        .status-offline {
+            background: #f44336;
+            color: white;
+        }
+        .status-updating {
+            background: #ff9800;
+            color: white;
+        }
     </style>
 </head>
 <body>
+    <!-- Индикатор статуса -->
+    <div id="status-indicator" class="status-offline">Проверка соединения...</div>
+    
     <h2>Проверка возвратных заказов</h2>
     <div id="modal">
         <div class="modal-inner">
@@ -66,8 +94,10 @@
     </div>
     <div class="section">
         <form id="manualForm" autocomplete="off">
-            <label>Номер заказа:<input type="text" id="orderNum" required></label>
+            <!-- Изменено местами: сначала номер клиентского возврата -->
             <label>Номер клиентского возврата:<input type="text" id="clientReturnNum" required></label>
+            <label>Номер заказа:<input type="text" id="orderNum" required></label>
+            
             <label>Название СД:<input type="text" id="sdName" required></label>
             <label>Название магазина:<input type="text" id="storeName" required></label>
             <label>Содержимое заказа:<textarea id="orderContent" required></textarea></label>
@@ -93,7 +123,8 @@
                 <label><input type="radio" name="goodUsed" value="Нет" required>Нет</label>
             </div>
             <label>Фактический размер:<input type="text" id="actualSize"></label>
-            <label>Комментарии по возврату:<textarea id="comment"></textarea></label>
+            <!-- Сделано обязательным -->
+            <label>Комментарии по возврату:<textarea id="comment" required></textarea></label>
             <label>Дата проверки:<input type="date" id="dateChecked" required></label>
             <label>Тикет/акт:<input type="text" id="ticketAct"></label>
             <label>Есть акт нрп?</label>
@@ -131,9 +162,46 @@
     <script>
         // ⚠️ ВАЖНО: ВАШ URL УЖЕ ВСТАВЛЕН НИЖЕ!
         const GOOGLE_SCRIPT_URL = "https://heck-evsc.onrender.com/proxy";
+        const RENDER_STATUS_URL = "https://heck-evsc.onrender.com/";
 
         let loadedOrders = [];
         let debugEnabled = false;
+        let lastDecision = ""; // Храним последнее уведомление
+
+        // Функция проверки статуса Render
+        async function checkRenderStatus() {
+            const statusIndicator = document.getElementById('status-indicator');
+            
+            try {
+                const response = await fetch(RENDER_STATUS_URL, {
+                    method: 'GET',
+                    cache: 'no-cache'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === "online") {
+                        statusIndicator.className = "status-online";
+                        statusIndicator.textContent = "🟢 Онлайн";
+                    } else {
+                        statusIndicator.className = "status-offline";
+                        statusIndicator.textContent = "🔴 Офлайн";
+                    }
+                } else {
+                    statusIndicator.className = "status-offline";
+                    statusIndicator.textContent = "🔴 Офлайн";
+                }
+            } catch (error) {
+                statusIndicator.className = "status-offline";
+                statusIndicator.textContent = "🔴 Офлайн";
+            }
+        }
+
+        // Периодическая проверка статуса каждые 30 секунд
+        setInterval(checkRenderStatus, 30000);
+        
+        // Первоначальная проверка
+        checkRenderStatus();
 
         function toggleDebug() {
             debugEnabled = !debugEnabled;
@@ -173,8 +241,8 @@
 
             // Заполняем текстовые поля
             const fields = {
-                'orderNum': 'Номер заказа',
-                'clientReturnNum': 'Номер клиентского возврата',
+                'clientReturnNum': 'Номер клиентского возврата', // Изменено
+                'orderNum': 'Номер заказа', // Изменено
                 'sdName': 'Название СД',
                 'storeName': 'Название магазина',
                 'orderContent': 'Содержимое заказа',
@@ -227,8 +295,8 @@
 
         function fillOrderFromCSV(order){
             const fields = {
-                'orderNum': 'Номер заказа',
-                'clientReturnNum': 'Номер клиентского возврата',
+                'clientReturnNum': 'Номер клиентского возврата', // Изменено
+                'orderNum': 'Номер заказа', // Изменено
                 'sdName': 'Название СД',
                 'storeName': 'Название магазина',
                 'orderContent': 'Содержимое заказа',
@@ -339,6 +407,7 @@
         updateDynamicFields();
 
         function showModal(msg, cb){
+            lastDecision = msg; // Сохраняем уведомление
             document.getElementById('modalText').textContent = msg;
             document.getElementById('modal').style.display = "flex";
             closeModal.cb = cb;
@@ -395,11 +464,11 @@
                 return false; 
             }
             if(packingOpened === "Да"){ 
-                showModal("Положи в уценку", submitAndSave); 
+                showModal("Положи в уценку. Нанеси этикетку Уценка", submitAndSave); 
                 return false; 
             }
             if(packingDamaged === "Да"){ 
-                showModal("Положи в уценку", submitAndSave); 
+                showModal("Положи в уценку. Нанеси этикетку Уценка", submitAndSave); 
                 return false; 
             }
             if(packingOpened === "Нет" && packingDamaged === "Нет" && goodDamaged === "Нет" && goodUsed === "Нет" && toASC === "Нет" && peresort === "Нет"){
@@ -431,10 +500,10 @@
             debugLog("=== НАЧАЛО ОТПРАВКИ ДАННЫХ ===");
             debugLog("Время: " + new Date().toISOString());
 
-            // Все 20 полей в точном порядке, как в Excel
+            // Все 20 полей в точном порядке, как в Excel + результат
             const data = {
-                "Номер заказа": document.getElementById('orderNum').value.trim(),
-                "Номер клиентского возврата": document.getElementById('clientReturnNum').value.trim(),
+                "Номер клиентского возврата": document.getElementById('clientReturnNum').value.trim(), // Изменено
+                "Номер заказа": document.getElementById('orderNum').value.trim(), // Изменено
                 "Название СД": document.getElementById('sdName').value.trim(),
                 "Название магазина": document.getElementById('storeName').value.trim(),
                 "Содержимое заказа": document.getElementById('orderContent').value.trim(),
@@ -452,13 +521,13 @@
                 "Отправляем в АСЦ?": getRadio("toASC"),
                 "Серийный номер": document.getElementById('serialNum').value.trim(),
                 "Шк товара": document.getElementById('barcode').value.trim(),
-                "Результат проверки": document.getElementById('orderResult').value.trim()
+                "Результат проверки": lastDecision // Добавляем результат
             };
 
             // Диагностика: проверяем ВСЕ 20 полей
             debugLog("=== ПРОВЕРКА ВСЕХ 20 ПОЛЕЙ ===");
             const expectedOrder = [
-                "Номер заказа", "Номер клиентского возврата", "Название СД",
+                "Номер клиентского возврата", "Номер заказа", "Название СД", // Изменено
                 "Название магазина", "Содержимое заказа", "Причина возврата от клиента",
                 "Вскрыта товарная упаковка?", "Повреждена товарная упаковка?",
                 "Повреждение товара?", "Товар БУ?", "Фактический размер",
