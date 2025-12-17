@@ -267,7 +267,7 @@
         <div id="msg"></div>
     </div>
     
-    <!-- Новая секция для проверки отгруженных возвратов -->
+    <!-- Новая секция для проверки существующих возвратов -->
     <div class="section excel-section">
         <h4>Проверка существующих возвратов</h4>
         <p>Загрузите Excel файл с номерами клиентских возвратов для проверки наличия в базе</p>
@@ -657,15 +657,26 @@
                     body: formData
                 });
                 
-                const responseData = await response.json();
+                const textResponse = await response.text();
+                console.log("Ответ от сервера:", textResponse);
+                
+                let responseData;
+                try {
+                    responseData = JSON.parse(textResponse);
+                } catch (e) {
+                    throw new Error("Неверный формат ответа от сервера: " + textResponse);
+                }
                 
                 if (response.ok && responseData.status === "success") {
                     // Формируем результат
                     let resultHtml = '';
-                    if (responseData.shippedCount > 0) {
+                    const totalCount = responseData.totalCount || 0;
+                    const shippedCount = responseData.shippedCount || 0;
+                    
+                    if (shippedCount > 0) {
                         resultHtml = `
                             <div class="shipped-yes">
-                                ✅ Найдено совпадений: ${responseData.shippedCount} из ${responseData.totalCount} возвратов уже существуют в базе
+                                ✅ Найдено совпадений: ${shippedCount} из ${totalCount} возвратов уже существуют в базе
                                 <div class="shipped-details">
                                     Эти возвраты уже есть в системе и отмечены как существующие
                                 </div>
@@ -684,23 +695,25 @@
                     } else {
                         resultHtml = `
                             <div class="shipped-no">
-                                ℹ️ Совпадений не найдено: все ${responseData.totalCount} возвратов являются новыми
+                                ℹ️ Совпадений не найдено: все ${totalCount} возвратов являются новыми
                             </div>
                         `;
                     }
                     
                     resultDiv.innerHTML = resultHtml;
-                    resultDiv.className = responseData.shippedCount > 0 ? "shipped-yes" : "shipped-no";
+                    resultDiv.className = shippedCount > 0 ? "shipped-yes" : "shipped-no";
                 } else {
                     resultDiv.innerHTML = `
                         <div class="shipped-no">
                             ❌ Ошибка при проверке: ${responseData.message || 'Неизвестная ошибка'}
+                            <div class="shipped-details">Код ошибки: ${response.status}</div>
                         </div>
                     `;
                     resultDiv.className = "shipped-no";
                 }
                 
             } catch (error) {
+                console.error("Ошибка:", error);
                 resultDiv.innerHTML = `
                     <div class="shipped-no">
                         ❌ Ошибка при проверке: ${error.message}
