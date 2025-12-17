@@ -34,24 +34,22 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWdr29wlLiEOTEvjbDAnYm7Rrlpx1BzUwYllAI7jg47RHT5OqfaPTH7mT0G05-_nzwjg/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPxMEpL94-hDpY0BtuzbMnPVukskOhPAXzitOGSTLP_6YJxXoRHMWjyKk4hHFxNkYYgA/exec";
 
 // Основной прокси эндпоинт
 app.post("/proxy", async (req, res) => {
   console.log("\n" + "=".repeat(50));
   console.log("📨 ПОЛУЧЕН ЗАПРОС НА ПРОКСИ");
   console.log("Время:", new Date().toISOString());
+  console.log("Данные:", JSON.stringify(req.body, null, 2));
   
   try {
-    const data = req.body;
-    console.log("Данные от клиента:", JSON.stringify(data, null, 2));
-    
     // Отправляем в Google Apps Script
     console.log(`📤 Отправляю в Google: ${GOOGLE_SCRIPT_URL}`);
     
     const response = await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(req.body),
       headers: {
         'Content-Type': 'application/json'
       }
