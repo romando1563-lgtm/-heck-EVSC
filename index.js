@@ -2,17 +2,21 @@ import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
 import multer from "multer";
-import XLSX from "xlsx";
+import * as XLSX from "xlsx";
 
 const app = express();
 
 // Настройка multer для загрузки файлов
+const storage = multer.memoryStorage();
 const upload = multer({ 
+  storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
         file.mimetype === 'application/vnd.ms-excel' ||
-        file.mimetype === 'application/octet-stream') {
+        file.mimetype === 'application/octet-stream' ||
+        file.originalname.endsWith('.xlsx') || 
+        file.originalname.endsWith('.xls')) {
       cb(null, true);
     } else {
       cb(new Error('Неподдерживаемый формат файла. Разрешены только .xlsx и .xls'));
@@ -30,7 +34,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwTtH94yampePg0BU1MBOdFRmxpU9JsnMB0vKolIoOcoGVsl0kfHSomKz0vGDPtwIS2VA/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPxMEpL94-hDpY0BtuzbMnPVukskOhPAXzitOGSTLP_6YJxXoRHMWjyKk4hHFxNkYYgA/exec";
 
 // Основной прокси эндпоинт
 app.post("/proxy", async (req, res) => {
@@ -75,10 +79,10 @@ app.post("/proxy", async (req, res) => {
   }
 });
 
-// Эндпоинт для проверки отгруженных заказов по номеру клиентского возврата
+// Эндпоинт для проверки существующих возвратов по номеру клиентского возврата
 app.post("/proxy/check-shipped", upload.single('excelFile'), async (req, res) => {
   console.log("\n" + "=".repeat(50));
-  console.log("📨 ПОЛУЧЕН ЗАПРОС НА ПРОВЕРКУ ОТГРУЖЕННЫХ ВОЗВРАТОВ");
+  console.log("📨 ПОЛУЧЕН ЗАПРОС НА ПРОВЕРКУ СУЩЕСТВУЮЩИХ ВОЗВРАТОВ");
   console.log("Время:", new Date().toISOString());
   
   try {
@@ -89,8 +93,11 @@ app.post("/proxy/check-shipped", upload.single('excelFile'), async (req, res) =>
       });
     }
     
-    // Читаем Excel файл
-    console.log("📥 Читаю Excel файл...");
+    console.log("📥 Обрабатываю файл:", req.file.originalname);
+    console.log("📏 Размер файла:", req.file.size, "байт");
+    
+    // Читаем Excel файл из буфера
+    console.log("📖 Читаю Excel файл...");
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
@@ -105,7 +112,7 @@ app.post("/proxy/check-shipped", upload.single('excelFile'), async (req, res) =>
       const row = jsonData[i];
       if (row && row[0]) {
         const returnNum = row[0].toString().trim();
-        if (returnNum) {
+        if (returnNum && returnNum.length > 0) {
           returnNumbers.push(returnNum);
         }
       }
@@ -152,10 +159,10 @@ app.post("/proxy/check-shipped", upload.single('excelFile'), async (req, res) =>
     res.status(response.status).send(responseText);
     
   } catch (error) {
-    console.error("❌ ОШИБКА ПРОВЕРКИ ОТГРУЖЕННЫХ ВОЗВРАТОВ:", error);
+    console.error("❌ ОШИБКА ПРОВЕРКИ СУЩЕСТВУЮЩИХ ВОЗВРАТОВ:", error);
     res.status(500).json({
       status: "error",
-      message: "Ошибка проверки отгруженных возвратов: " + error.message
+      message: "Ошибка проверки существующих возвратов: " + error.message
     });
   }
 });
@@ -182,7 +189,7 @@ app.get("/", (req, res) => {
     timestamp: new Date().toISOString(),
     endpoints: {
       "POST /proxy": "Основной прокси для формы",
-      "POST /proxy/check-shipped": "Проверка отгруженных возвратов (multipart/form-data)"
+      "POST /proxy/check-shipped": "Проверка существующих возвратов (multipart/form-data)"
     }
   });
 });
