@@ -267,12 +267,12 @@
         <div id="msg"></div>
     </div>
     
-    <!-- Новая секция для проверки существующих возвратов -->
+    <!-- Новая секция для обновления статуса "Отгружен" -->
     <div class="section excel-section">
-        <h4>Проверка существующих возвратов</h4>
-        <p>Загрузите Excel файл с номерами клиентских возвратов для проверки наличия в базе</p>
+        <h4>Обновление статуса "Отгружен"</h4>
+        <p>Загрузите Excel файл с номерами клиентских возвратов для обновления статуса в Google Таблице</p>
         <input type="file" id="excelFile" accept=".xlsx,.xls">
-        <button type="button" id="checkShippedBtn" onclick="checkShippedReturns()">Проверить существующие возвраты</button>
+        <button type="button" id="checkShippedBtn" onclick="updateShippedStatus()">Обновить статус отгружен</button>
         <div id="shippedResult"></div>
     </div>
     
@@ -284,7 +284,7 @@
     <script>
         // ⚠️ ВАЖНО: ВАШ URL УЖЕ ВСТАВЛЕН НИЖЕ!
         const GOOGLE_SCRIPT_URL = "https://heck-evsc.onrender.com/proxy";
-        const CHECK_SHIPPED_URL = "https://heck-evsc.onrender.com/proxy/check-shipped";
+        const UPDATE_SHIPPED_URL = "https://heck-evsc.onrender.com/proxy/update-shipped";
         const RENDER_STATUS_URL = "https://heck-evsc.onrender.com/";
 
         let loadedOrders = [];
@@ -622,11 +622,11 @@
             setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => toast.remove(), 400); }, 3400);
         }
 
-        // Функция для проверки существующих возвратов
-        async function checkShippedReturns() {
+        // Функция для обновления статуса "Отгружен"
+        async function updateShippedStatus() {
             const fileInput = document.getElementById('excelFile');
             const resultDiv = document.getElementById('shippedResult');
-            const checkBtn = document.getElementById('checkShippedBtn');
+            const updateBtn = document.getElementById('checkShippedBtn');
             
             if (!fileInput.files || fileInput.files.length === 0) {
                 showToast("Пожалуйста, выберите Excel файл", "error");
@@ -640,9 +640,9 @@
             }
             
             // Блокируем кнопку и показываем индикатор загрузки
-            checkBtn.disabled = true;
-            checkBtn.textContent = "Проверяем...";
-            resultDiv.innerHTML = '<div class="shipped-checking">🔍 Проверяем существующие возвраты...</div>';
+            updateBtn.disabled = true;
+            updateBtn.textContent = "Обновляем...";
+            resultDiv.innerHTML = '<div class="shipped-checking">🔄 Обновляем статус отгружен...</div>';
             resultDiv.className = "shipped-checking";
             resultDiv.style.display = "block";
             
@@ -651,8 +651,8 @@
                 const formData = new FormData();
                 formData.append('excelFile', file);
                 
-                // Отправляем запрос на проверку
-                const response = await fetch(CHECK_SHIPPED_URL, {
+                // Отправляем запрос на обновление
+                const response = await fetch(UPDATE_SHIPPED_URL, {
                     method: 'POST',
                     body: formData
                 });
@@ -670,23 +670,23 @@
                 if (response.ok && responseData.status === "success") {
                     // Формируем результат
                     let resultHtml = '';
-                    const totalCount = responseData.totalCount || 0;
-                    const shippedCount = responseData.shippedCount || 0;
+                    const totalChecked = responseData.totalChecked || 0;
+                    const updatedCount = responseData.updatedCount || 0;
                     
-                    if (shippedCount > 0) {
+                    if (updatedCount > 0) {
                         resultHtml = `
                             <div class="shipped-yes">
-                                ✅ Найдено совпадений: ${shippedCount} из ${totalCount} возвратов уже существуют в базе
+                                ✅ Обновлено: ${updatedCount} из ${totalChecked} возвратов отмечены как "Отгружен"
                                 <div class="shipped-details">
-                                    Эти возвраты уже есть в системе и отмечены как существующие
+                                    В Google Таблице создан столбец "Отгружен" и проставлен статус "Да"
                                 </div>
                             </div>
                         `;
                         
-                        // Добавляем список найденных возвратов
-                        if (responseData.shippedReturns && responseData.shippedReturns.length > 0) {
-                            let listHtml = '<div class="shipped-list"><strong>Существующие возвраты:</strong>';
-                            responseData.shippedReturns.forEach(returnNum => {
+                        // Добавляем список обновленных возвратов
+                        if (responseData.updatedReturns && responseData.updatedReturns.length > 0) {
+                            let listHtml = '<div class="shipped-list"><strong>Обновленные возвраты:</strong>';
+                            responseData.updatedReturns.forEach(returnNum => {
                                 listHtml += `<div class="shipped-item">• ${returnNum}</div>`;
                             });
                             listHtml += '</div>';
@@ -695,17 +695,17 @@
                     } else {
                         resultHtml = `
                             <div class="shipped-no">
-                                ℹ️ Совпадений не найдено: все ${totalCount} возвратов являются новыми
+                                ℹ️ Совпадений не найдено: ${totalChecked} возвратов не найдены в таблице
                             </div>
                         `;
                     }
                     
                     resultDiv.innerHTML = resultHtml;
-                    resultDiv.className = shippedCount > 0 ? "shipped-yes" : "shipped-no";
+                    resultDiv.className = updatedCount > 0 ? "shipped-yes" : "shipped-no";
                 } else {
                     resultDiv.innerHTML = `
                         <div class="shipped-no">
-                            ❌ Ошибка при проверке: ${responseData.message || 'Неизвестная ошибка'}
+                            ❌ Ошибка при обновлении: ${responseData.message || 'Неизвестная ошибка'}
                             <div class="shipped-details">Код ошибки: ${response.status}</div>
                         </div>
                     `;
@@ -716,14 +716,14 @@
                 console.error("Ошибка:", error);
                 resultDiv.innerHTML = `
                     <div class="shipped-no">
-                        ❌ Ошибка при проверке: ${error.message}
+                        ❌ Ошибка при обновлении: ${error.message}
                     </div>
                 `;
                 resultDiv.className = "shipped-no";
             } finally {
                 // Разблокируем кнопку
-                checkBtn.disabled = false;
-                checkBtn.textContent = "Проверить существующие возвраты";
+                updateBtn.disabled = false;
+                updateBtn.textContent = "Обновить статус отгружен";
             }
         }
 
