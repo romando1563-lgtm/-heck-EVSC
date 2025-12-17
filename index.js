@@ -34,7 +34,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwTtH94yampePg0BU1MBOdFRmxpU9JsnMB0vKolIoOcoGVsl0kfHSomKz0vGDPtwIS2VA/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJKYD9fmbrY9cCmohRk4t5QuO8SPlA4VeBLAAqlZy0gDl5eCIxIqjSma5Ug2HxLvZ_RA/exec";
 
 // Основной прокси эндпоинт
 app.post("/proxy", async (req, res) => {
@@ -79,10 +79,10 @@ app.post("/proxy", async (req, res) => {
   }
 });
 
-// Эндпоинт для проверки существующих возвратов по номеру клиентского возврата
-app.post("/proxy/check-shipped", upload.single('excelFile'), async (req, res) => {
+// Эндпоинт для обновления статуса "Отгружен"
+app.post("/proxy/update-shipped", upload.single('excelFile'), async (req, res) => {
   console.log("\n" + "=".repeat(50));
-  console.log("📨 ПОЛУЧЕН ЗАПРОС НА ПРОВЕРКУ СУЩЕСТВУЮЩИХ ВОЗВРАТОВ");
+  console.log("📨 ПОЛУЧЕН ЗАПРОС НА ОБНОВЛЕНИЕ СТАТУСА ОТГРУЖЕН");
   console.log("Время:", new Date().toISOString());
   
   try {
@@ -124,17 +124,16 @@ app.post("/proxy/check-shipped", upload.single('excelFile'), async (req, res) =>
       return res.json({
         status: "success",
         message: "В файле не найдено номеров клиентских возвратов",
-        shippedCount: 0,
-        totalCount: 0,
-        shippedReturns: []
+        updatedCount: 0,
+        totalChecked: 0
       });
     }
     
     // Отправляем запрос в Google Apps Script
-    console.log(`📤 Отправляю в Google для проверки: ${GOOGLE_SCRIPT_URL}`);
+    console.log(`📤 Отправляю в Google для обновления: ${GOOGLE_SCRIPT_URL}`);
     
     const requestData = {
-      action: "checkShipped",
+      action: "updateShipped",
       returnNumbers: returnNumbers
     };
     
@@ -159,10 +158,10 @@ app.post("/proxy/check-shipped", upload.single('excelFile'), async (req, res) =>
     res.status(response.status).send(responseText);
     
   } catch (error) {
-    console.error("❌ ОШИБКА ПРОВЕРКИ СУЩЕСТВУЮЩИХ ВОЗВРАТОВ:", error);
+    console.error("❌ ОШИБКА ОБНОВЛЕНИЯ СТАТУСА:", error);
     res.status(500).json({
       status: "error",
-      message: "Ошибка проверки существующих возвратов: " + error.message
+      message: "Ошибка обновления статуса: " + error.message
     });
   }
 });
@@ -174,7 +173,7 @@ app.options('/proxy', (req, res) => {
   res.sendStatus(200);
 });
 
-app.options('/proxy/check-shipped', (req, res) => {
+app.options('/proxy/update-shipped', (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
@@ -189,7 +188,7 @@ app.get("/", (req, res) => {
     timestamp: new Date().toISOString(),
     endpoints: {
       "POST /proxy": "Основной прокси для формы",
-      "POST /proxy/check-shipped": "Проверка существующих возвратов (multipart/form-data)"
+      "POST /proxy/update-shipped": "Обновление статуса отгружен (multipart/form-data)"
     }
   });
 });
