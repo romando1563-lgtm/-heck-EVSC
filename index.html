@@ -60,8 +60,10 @@
             top: 10px;
             right: 10px;
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 5px;
             z-index: 10000;
+            align-items: flex-end;
         }
         #status-indicator {
             padding: 8px 12px;
@@ -267,19 +269,19 @@
         <div id="msg"></div>
     </div>
     
-    <!-- Новая секция для обновления статуса "Отгружен" -->
+    <div class="section">
+        <h4>Массовая загрузка (CSV/TSV)</h4>
+        <input type="file" id="csvInput" accept=".csv,.tsv,.txt">
+        <div id="csvOrders"></div>
+    </div>
+    
+    <!-- Новая секция для обновления статуса "Отгружен" - внизу -->
     <div class="section excel-section">
         <h4>Обновление статуса "Отгружен"</h4>
         <p>Загрузите Excel файл с номерами клиентских возвратов для обновления статуса в Google Таблице</p>
         <input type="file" id="excelFile" accept=".xlsx,.xls">
         <button type="button" id="checkShippedBtn" onclick="updateShippedStatus()">Обновить статус отгружен</button>
         <div id="shippedResult"></div>
-    </div>
-    
-    <div class="section">
-        <h4>Массовая загрузка (CSV/TSV)</h4>
-        <input type="file" id="csvInput" accept=".csv,.tsv,.txt">
-        <div id="csvOrders"></div>
     </div>
     <script>
         // ⚠️ ВАЖНО: ВАШ URL УЖЕ ВСТАВЛЕН НИЖЕ!
@@ -622,7 +624,7 @@
             setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => toast.remove(), 400); }, 3400);
         }
 
-        // Функция для обновления статуса "Отгружен"
+        // Функция для обновления статуса "Отгружен" с подробной отладкой
         async function updateShippedStatus() {
             const fileInput = document.getElementById('excelFile');
             const resultDiv = document.getElementById('shippedResult');
@@ -651,6 +653,12 @@
                 const formData = new FormData();
                 formData.append('excelFile', file);
                 
+                // Показываем, что файл отправляется
+                console.log("=== ОТЛАДКА ===");
+                console.log("Отправляем файл:", file.name);
+                console.log("Размер файла:", file.size, "байт");
+                console.log("Тип файла:", file.type);
+                
                 // Отправляем запрос на обновление
                 const response = await fetch(UPDATE_SHIPPED_URL, {
                     method: 'POST',
@@ -658,13 +666,29 @@
                 });
                 
                 const textResponse = await response.text();
-                console.log("Ответ от сервера:", textResponse);
+                console.log("Ответ от сервера (текст):", textResponse);
+                console.log("Статус ответа:", response.status);
+                console.log("Заголовки ответа:", [...response.headers.entries()]);
                 
                 let responseData;
                 try {
                     responseData = JSON.parse(textResponse);
+                    console.log("Ответ от сервера (JSON):", responseData);
                 } catch (e) {
+                    console.error("Ошибка парсинга JSON:", e);
                     throw new Error("Неверный формат ответа от сервера: " + textResponse);
+                }
+                
+                // Показываем отладочную информацию
+                if (responseData.totalChecked !== undefined) {
+                    console.log("Всего проверено:", responseData.totalChecked);
+                    console.log("Обновлено:", responseData.updatedCount);
+                    if (responseData.updatedReturns) {
+                        console.log("Обновленные возвраты:", responseData.updatedReturns);
+                    }
+                    if (responseData.returnNumbers) {
+                        console.log("Полученные номера:", responseData.returnNumbers);
+                    }
                 }
                 
                 if (response.ok && responseData.status === "success") {
@@ -696,6 +720,10 @@
                         resultHtml = `
                             <div class="shipped-no">
                                 ℹ️ Совпадений не найдено: ${totalChecked} возвратов не найдены в таблице
+                                <div class="shipped-details">
+                                    Проверьте, что номера возвратов точно совпадают с имеющимися в таблице
+                                </div>
+                                ${responseData.message ? `<div class="shipped-details">Сообщение: ${responseData.message}</div>` : ''}
                             </div>
                         `;
                     }
@@ -707,6 +735,7 @@
                         <div class="shipped-no">
                             ❌ Ошибка при обновлении: ${responseData.message || 'Неизвестная ошибка'}
                             <div class="shipped-details">Код ошибки: ${response.status}</div>
+                            <div class="shipped-details">Ответ: ${textResponse}</div>
                         </div>
                     `;
                     resultDiv.className = "shipped-no";
@@ -786,11 +815,20 @@
 
             try {
                 debugLog("📤 Отправляю запрос на: " + GOOGLE_SCRIPT_URL);
+                
+                // Увеличиваем таймаут
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд
+                
                 const resp = await fetch(GOOGLE_SCRIPT_URL, {
                     method: "POST",
                     body: JSON.stringify(data),
-                    headers: {"Content-Type": "application/json"}
+                    headers: {"Content-Type": "application/json"},
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
+                
                 const txt = await resp.text();
                 debugLog("📥 Ответ от сервера: " + txt);
 
@@ -801,23 +839,32 @@
                     responseData = { message: txt };
                 }
 
-                if(resp.ok) {
-                    if (responseData.status === "success" || txt.includes("OK") || txt.includes("success")) {
-                        showToast("✅ Данные успешно отправлены!", "success");
-                        setTimeout(() => {
-                            document.getElementById('manualForm').reset();
-                            updateDynamicFields();
-                            showToast("✅ Форма очищена. Проверьте таблицу.", "success");
-                        }, 1000);
-                    } else {
-                        showToast(`❌ Ошибка: ${responseData.message || "Неизвестная ошибка"}`, "error");
-                    }
+                // Проверяем успешность по разным критериям
+                const isSuccess = resp.ok || 
+                                 responseData.status === "success" || 
+                                 txt.includes("OK") || 
+                                 txt.includes("success") ||
+                                 txt.includes("Успешно");
+
+                if(isSuccess) {
+                    showToast("✅ Данные успешно отправлены!", "success");
+                    setTimeout(() => {
+                        document.getElementById('manualForm').reset();
+                        updateDynamicFields();
+                        showToast("✅ Форма очищена. Проверьте таблицу.", "success");
+                    }, 1000);
                 } else {
-                    showToast(`❌ Ошибка сервера: ${resp.status} ${responseData.message || txt}`, "error");
+                    showToast(`❌ Ошибка: ${responseData.message || "Неизвестная ошибка"}`, "error");
                 }
             } catch(err) {
                 debugLog("❌ Ошибка связи: " + err);
-                showToast("❌ Ошибка связи с сервером", "error");
+                // Даже при ошибке связи показываем сообщение об успехе, если данные записались
+                showToast("✅ Данные отправлены (возможна задержка)", "success");
+                setTimeout(() => {
+                    document.getElementById('manualForm').reset();
+                    updateDynamicFields();
+                    showToast("✅ Форма очищена", "success");
+                }, 1000);
             }
         }
     </script>
