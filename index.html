@@ -190,6 +190,14 @@
         .shipped-item:last-child {
             border-bottom: none;
         }
+        
+        /* Скрытие поля тикета */
+        #ticketTSBBlock {
+            display: none;
+        }
+        #ticketTSBBlock.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -241,12 +249,25 @@
             <!-- Сделано обязательным -->
             <label>Комментарии по возврату:<textarea id="comment" required></textarea></label>
             <label>Дата проверки:<input type="date" id="dateChecked" required></label>
-            <label>Тикет/акт:<input type="text" id="ticketAct"></label>
+            
             <label>Есть акт нрп?</label>
             <div class="flex-row">
                 <label><input type="radio" name="nrp" value="Да" required>Да</label>
                 <label><input type="radio" name="nrp" value="Нет" required>Нет</label>
             </div>
+            
+            <!-- ДОБАВЛЕНО: Поле Кража -->
+            <label>Кража?</label>
+            <div class="flex-row">
+                <label><input type="radio" name="theft" value="Да" required>Да</label>
+                <label><input type="radio" name="theft" value="Нет" required>Нет</label>
+            </div>
+            
+            <!-- УСЛОВНОЕ ПОЛЕ: Тикет в ТСБ -->
+            <div id="ticketTSBBlock">
+                <label>Тикет в ТСБ:<input type="text" id="ticketTSB"></label>
+            </div>
+            
             <label>Пересорт:</label>
             <div class="flex-row">
                 <label><input type="radio" name="peresort" value="Да" required>Да</label>
@@ -378,7 +399,7 @@
                 'actualSize': 'Фактический размер',
                 'comment': 'Комментарии по возврату',
                 'dateChecked': 'Дата проверки',
-                'ticketAct': 'Тикет/акт',
+                'ticketTSB': 'Тикет в ТСБ', // Изменено
                 'serialNum': 'Серийный номер',
                 'barcode': 'Шк товара',
                 'orderResult': 'Результат проверки'
@@ -398,6 +419,7 @@
                 "Повреждение товара?": "goodDamaged",
                 "Товар БУ?": "goodUsed",
                 "Есть акт нрп?": "nrp",
+                "Кража?": "theft", // Добавлено
                 "Пересорт": "peresort",
                 "Отправляем в АСЦ?": "toASC"
             };
@@ -414,6 +436,7 @@
 
             autofillLock = false;
             updateDynamicFields();
+            updateTheftField(); // Обновляем отображение поля тикета
         }
 
         ['input','change'].forEach(ev => {
@@ -432,7 +455,7 @@
                 'actualSize': 'Фактический размер',
                 'comment': 'Комментарии по возврату',
                 'dateChecked': 'Дата проверки',
-                'ticketAct': 'Тикет/акт',
+                'ticketTSB': 'Тикет в ТСБ', // Изменено
                 'serialNum': 'Серийный номер',
                 'barcode': 'Шк товара',
                 'orderResult': 'Результат проверки'
@@ -451,6 +474,7 @@
                 "Повреждение товара?": "goodDamaged",
                 "Товар БУ?": "goodUsed",
                 "Есть акт нрп?": "nrp",
+                "Кража?": "theft", // Добавлено
                 "Пересорт": "peresort",
                 "Отправляем в АСЦ?": "toASC"
             };
@@ -466,6 +490,7 @@
             });
 
             updateDynamicFields();
+            updateTheftField(); // Обновляем отображение поля тикета
         }
 
         function detectDelimiter(text) {
@@ -516,6 +541,23 @@
             reader.readAsText(file, 'utf-8');
         });
 
+        // Функция для обновления отображения поля тикета
+        function updateTheftField() {
+            const theftValue = getRadio('theft');
+            const ticketBlock = document.getElementById('ticketTSBBlock');
+            
+            if (theftValue === 'Да') {
+                ticketBlock.classList.add('show');
+            } else {
+                ticketBlock.classList.remove('show');
+                // Очищаем значение при скрытии
+                const ticketInput = document.getElementById('ticketTSB');
+                if (ticketInput) {
+                    ticketInput.value = '';
+                }
+            }
+        }
+
         function updateDynamicFields(){
             let showSerial = getRadio('toASC') === 'Да';
             const serialBlock = document.getElementById('serialBlock');
@@ -527,11 +569,18 @@
             }
         }
 
+        // Добавляем обработчики для поля кражи
         ['change','input'].forEach(ev => {
+            document.querySelectorAll('input[name="theft"]').forEach(e => {
+                e.addEventListener(ev, updateTheftField);
+            });
+            
             document.querySelectorAll('input[name="peresort"]').forEach(e => e.addEventListener(ev, updateDynamicFields));
             document.querySelectorAll('input[name="toASC"]').forEach(e => e.addEventListener(ev, updateDynamicFields));
         });
 
+        // Инициализация при загрузке страницы
+        updateTheftField();
         updateDynamicFields();
 
         function showModal(msg, cb){
@@ -555,6 +604,7 @@
         document.getElementById('manualForm').onsubmit = function(e){
             e.preventDefault();
             updateDynamicFields();
+            updateTheftField();
 
             const actNrp = getRadio("nrp");
             if(actNrp === "Да"){ 
@@ -775,8 +825,9 @@
                 "Фактический размер": document.getElementById('actualSize').value.trim(),
                 "Комментарии по возврату": document.getElementById('comment').value.trim(),
                 "Дата проверки": document.getElementById('dateChecked').value,
-                "Тикет/акт": document.getElementById('ticketAct').value.trim(),
                 "Есть акт нрп?": getRadio('nrp'),
+                "Кража?": getRadio('theft'), // Добавлено
+                "Тикет в ТСБ": document.getElementById('ticketTSB').value.trim(), // Изменено
                 "Пересорт": getRadio("peresort"),
                 "Отправляем в АСЦ?": getRadio("toASC"),
                 "Серийный номер": document.getElementById('serialNum').value.trim(),
@@ -784,15 +835,16 @@
                 "Результат проверки": lastDecision // Добавляем результат
             };
 
-            // Диагностика: проверяем ВСЕ 20 полей
-            debugLog("=== ПРОВЕРКА ВСЕХ 20 ПОЛЕЙ ===");
+            // Диагностика: проверяем ВСЕ 21 полей
+            debugLog("=== ПРОВЕРКА ВСЕХ 21 ПОЛЕЙ ===");
             const expectedOrder = [
                 "Номер клиентского возврата", "Номер заказа", "Название СД", // Изменено
                 "Название магазина", "Содержимое заказа", "Причина возврата от клиента",
                 "Вскрыта товарная упаковка?", "Повреждена товарная упаковка?",
                 "Повреждение товара?", "Товар БУ?", "Фактический размер",
-                "Комментарии по возврату", "Дата проверки", "Тикет/акт",
-                "Есть акт нрп?", "Пересорт", "Отправляем в АСЦ?",
+                "Комментарии по возврату", "Дата проверки", "Есть акт нрп?",
+                "Кража?", "Тикет в ТСБ", // Изменено
+                "Пересорт", "Отправляем в АСЦ?",
                 "Серийный номер", "Шк товара", "Результат проверки"
             ];
 
@@ -811,7 +863,7 @@
                 return;
             }
 
-            debugLog("✅ Все 20 полей присутствуют");
+            debugLog("✅ Все 21 полей присутствуют");
 
             try {
                 debugLog("📤 Отправляю запрос на: " + GOOGLE_SCRIPT_URL);
@@ -851,6 +903,7 @@
                     setTimeout(() => {
                         document.getElementById('manualForm').reset();
                         updateDynamicFields();
+                        updateTheftField(); // Обновляем отображение поля тикета
                         showToast("✅ Форма очищена. Проверьте таблицу.", "success");
                     }, 1000);
                 } else {
@@ -863,6 +916,7 @@
                 setTimeout(() => {
                     document.getElementById('manualForm').reset();
                     updateDynamicFields();
+                    updateTheftField(); // Обновляем отображение поля тикета
                     showToast("✅ Форма очищена", "success");
                 }, 1000);
             }
